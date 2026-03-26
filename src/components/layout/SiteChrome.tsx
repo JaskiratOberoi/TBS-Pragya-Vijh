@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { ShoppingBag, Heart, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { formatINR } from "@/lib/utils";
 import { signIn } from "next-auth/react";
 import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -21,7 +23,13 @@ const nav = [
 
 type CartSummary = { totalPaise: number; subtotalPaise: number };
 
+function navActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function SiteChrome() {
+  const pathname = usePathname();
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -61,22 +69,32 @@ export function SiteChrome() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="font-serif text-xl font-semibold text-primary">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-bento-canvas/90 shadow-bento-sm backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:gap-6">
+          <Link href="/" className="shrink-0 font-serif text-lg font-semibold text-primary md:text-xl">
             The Blissful Soul
           </Link>
-          <nav className="hidden items-center gap-6 md:flex">
-            {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="text-sm text-muted-foreground hover:text-foreground">
-                {item.label}
-              </Link>
-            ))}
+          <nav className="hidden items-center gap-1 rounded-full border border-border/80 bg-card/80 p-1 shadow-sm md:flex">
+            {nav.map((item) => {
+              const active = navActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                    active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Search">
+                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Search">
                   <Search className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -88,7 +106,7 @@ export function SiteChrome() {
                   placeholder="Type to search…"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  className="mt-4"
+                  className="mt-4 rounded-full"
                   autoFocus
                 />
                 <ul className="mt-4 max-h-64 space-y-2 overflow-auto">
@@ -96,11 +114,11 @@ export function SiteChrome() {
                     <li key={p.slug}>
                       <Link
                         href={`/shop/${p.slug}`}
-                        className="flex items-center gap-3 rounded-md p-2 hover:bg-muted"
+                        className="flex items-center gap-3 rounded-2xl p-2 hover:bg-muted"
                         onClick={() => setSearchOpen(false)}
                       >
                         {p.images[0] && (
-                          <Image src={p.images[0]} alt="" width={40} height={40} className="rounded object-cover" />
+                          <Image src={p.images[0]} alt="" width={40} height={40} className="rounded-lg object-cover" />
                         )}
                         <span className="text-sm">{p.name}</span>
                       </Link>
@@ -110,7 +128,7 @@ export function SiteChrome() {
               </SheetContent>
             </Sheet>
 
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" className="rounded-full" asChild>
               <Link href="/wishlist" aria-label="Wishlist">
                 <Heart className="h-5 w-5" />
               </Link>
@@ -118,7 +136,7 @@ export function SiteChrome() {
 
             <Sheet open={cartOpen} onOpenChange={setCartOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative" aria-label="Cart">
+                <Button variant="ghost" size="icon" className="relative rounded-full" aria-label="Cart">
                   <ShoppingBag className="h-5 w-5" />
                   {itemCount > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
@@ -127,7 +145,7 @@ export function SiteChrome() {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="rounded-l-3xl">
                 <SheetHeader>
                   <SheetTitle>Your cart</SheetTitle>
                 </SheetHeader>
@@ -146,12 +164,12 @@ export function SiteChrome() {
                   <div className="border-t pt-4 text-sm font-medium">
                     Total {formatINR(cart?.summary?.totalPaise ?? 0)}
                   </div>
-                  <Button className="w-full" asChild>
+                  <Button className="w-full rounded-full" asChild>
                     <Link href="/checkout" onClick={() => setCartOpen(false)}>
                       Checkout
                     </Link>
                   </Button>
-                  <Button variant="outline" className="w-full" asChild>
+                  <Button variant="outline" className="w-full rounded-full" asChild>
                     <Link href="/cart" onClick={() => setCartOpen(false)}>
                       View cart
                     </Link>
@@ -162,24 +180,24 @@ export function SiteChrome() {
 
             <Sheet open={authOpen} onOpenChange={setAuthOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Account">
+                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
                   <User className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="rounded-l-3xl">
                 <SheetHeader>
                   <SheetTitle>{status === "authenticated" ? "Account" : "Sign in"}</SheetTitle>
                 </SheetHeader>
                 {status === "authenticated" ? (
                   <div className="mt-6 space-y-3">
                     <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
-                    <Button className="w-full" asChild>
+                    <Button className="w-full rounded-full" asChild>
                       <Link href="/account" onClick={() => setAuthOpen(false)}>
                         My account
                       </Link>
                     </Button>
                     {session?.user?.role === "ADMIN" && (
-                      <Button variant="secondary" className="w-full" asChild>
+                      <Button variant="secondary" className="w-full rounded-full" asChild>
                         <Link href="/admin" onClick={() => setAuthOpen(false)}>
                           Admin
                         </Link>
@@ -199,9 +217,9 @@ export function SiteChrome() {
                       });
                     }}
                   >
-                    <Input name="email" type="email" placeholder="Email" required />
-                    <Input name="password" type="password" placeholder="Password" required />
-                    <Button type="submit" className="w-full">
+                    <Input name="email" type="email" placeholder="Email" required className="rounded-full" />
+                    <Input name="password" type="password" placeholder="Password" required className="rounded-full" />
+                    <Button type="submit" className="w-full rounded-full">
                       Sign in
                     </Button>
                     <Button variant="link" className="px-0" asChild>

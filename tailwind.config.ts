@@ -43,11 +43,23 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        bento: {
+          mint: "hsl(var(--bento-mint))",
+          peach: "hsl(var(--bento-peach))",
+          cream: "hsl(var(--bento-cream))",
+          canvas: "hsl(var(--bento-canvas))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "3xl": "1.5rem",
+        "4xl": "2rem",
+      },
+      boxShadow: {
+        bento: "0 4px 24px -4px hsl(225 25% 12% / 0.08), 0 2px 8px -2px hsl(225 25% 12% / 0.06)",
+        "bento-sm": "0 2px 12px -2px hsl(225 25% 12% / 0.07)",
       },
     },
   },

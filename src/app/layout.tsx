@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable}`}>
-      <body className="min-h-screen bg-background font-sans antialiased pb-16 md:pb-0">
+      <body className="min-h-screen bg-bento-canvas font-sans antialiased pb-16 md:pb-0">
         <Providers>
           <CartMergeOnLogin />
           <FbPixel />

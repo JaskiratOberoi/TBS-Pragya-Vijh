@@ -24,11 +24,17 @@ export function AddToCartButton({ productId, quantity = 1 }: { productId: string
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button onClick={() => void add()} disabled={loading}>
+    <div className="flex flex-wrap gap-3">
+      <Button className="rounded-full px-8" onClick={() => void add()} disabled={loading}>
         {loading ? "Adding…" : "Add to cart"}
       </Button>
-      <Button type="button" variant="secondary" disabled={loading} onClick={() => void add().then(() => router.push("/checkout"))}>
+      <Button
+        type="button"
+        variant="secondary"
+        className="rounded-full px-8"
+        disabled={loading}
+        onClick={() => void add().then(() => router.push("/checkout"))}
+      >
         Buy now
       </Button>
     </div>

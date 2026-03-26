@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { ProductDetailTabs } from "@/components/shop/ProductDetailTabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { ProductTile } from "@/components/shop/ProductTile";
 import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -62,40 +62,52 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav className="mb-6 text-sm text-muted-foreground">
-        <Link href="/shop">Shop</Link>
+      <nav className="mb-8 text-sm text-muted-foreground">
+        <Link href="/shop" className="hover:text-foreground">
+          Shop
+        </Link>
         <span className="mx-2">/</span>
-        <Link href={`/shop?category=${product.category.slug}`}>{product.category.name}</Link>
+        <Link href={`/shop?category=${product.category.slug}`} className="hover:text-foreground">
+          {product.category.name}
+        </Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">{product.name}</span>
       </nav>
       <div className="grid gap-10 lg:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
-          <Image src={product.images[0] ?? "/assets/products/placeholder.svg"} alt={product.name} fill className="object-cover" priority />
+        <div className="relative aspect-square overflow-hidden rounded-4xl border border-border/40 bg-muted shadow-bento">
+          <Image
+            src={product.images[0] ?? "/assets/products/placeholder.svg"}
+            alt={product.name}
+            fill
+            className="object-cover"
+            priority
+          />
           {off > 0 && (
-            <Badge className="absolute left-3 top-3" variant="destructive">
+            <Badge className="absolute left-4 top-4 rounded-full px-3 py-1 shadow-sm" variant="destructive">
               -{off}%
             </Badge>
           )}
           {product.productType === "DIGITAL" && (
-            <Badge className="absolute right-3 top-3">Digital product</Badge>
+            <Badge className="absolute right-4 top-4 rounded-full bg-background/95 backdrop-blur-sm">Digital product</Badge>
           )}
         </div>
         <div>
-          <h1 className="font-serif text-3xl font-bold text-primary">{product.name}</h1>
-          <div className="mt-3 flex items-center gap-3">
+          <h1 className="font-serif text-3xl font-bold text-foreground md:text-4xl">{product.name}</h1>
+          <div className="mt-4 flex items-center gap-3">
             {product.salePrice != null && product.salePrice < product.price && (
               <span className="text-lg text-muted-foreground line-through">{formatINR(product.price)}</span>
             )}
-            <span className="text-2xl font-semibold text-primary">{formatINR(unit)}</span>
+            <span className="inline-flex rounded-full bg-primary px-4 py-2 text-xl font-semibold text-primary-foreground shadow-bento-sm">
+              {formatINR(unit)}
+            </span>
           </div>
           {product.productType === "PHYSICAL" && (
-            <p className="mt-2 text-sm text-muted-foreground">In stock: {product.stock}</p>
+            <p className="mt-3 text-sm text-muted-foreground">In stock: {product.stock}</p>
           )}
           <p className="mt-4 text-xs text-muted-foreground">
             Free Money Potli on orders ≥ ₹1499 · Buy 3 Get 1 Free (auto-applied in cart)
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-8 flex flex-wrap gap-3">
             <AddToCartButton productId={product.id} />
             <WishlistButton productId={product.id} />
           </div>
@@ -110,23 +122,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
       {related.length > 0 && (
-        <section className="mt-16">
-          <h2 className="font-serif text-xl font-semibold text-primary">Related products</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <section className="mt-20">
+          <h2 className="font-serif text-xl font-bold text-foreground md:text-2xl">Related products</h2>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
             {related.map((p) => (
-              <Card key={p.id} className="overflow-hidden">
-                <Link href={`/shop/${p.slug}`}>
-                  <div className="relative aspect-square bg-muted">
-                    <Image src={p.images[0] ?? "/assets/products/placeholder.svg"} alt={p.name} fill className="object-cover" />
-                  </div>
-                </Link>
-                <CardContent className="p-3">
-                  <Link href={`/shop/${p.slug}`} className="line-clamp-2 text-sm font-medium">
-                    {p.name}
-                  </Link>
-                  <p className="text-sm text-primary">{formatINR(effectiveUnitPrice(p))}</p>
-                </CardContent>
-              </Card>
+              <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
             ))}
           </div>
         </section>
