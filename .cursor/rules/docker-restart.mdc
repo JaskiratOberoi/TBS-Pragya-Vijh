@@ -1,0 +1,24 @@
+---
+description: Restart blissful-soul Docker dev stack after config or dependency changes
+globs:
+  - blissful-soul/next.config.*
+  - blissful-soul/.env*
+  - blissful-soul/docker-compose*.yml
+  - blissful-soul/Dockerfile*
+  - blissful-soul/prisma/seed.ts
+  - blissful-soul/prisma/schema.prisma
+---
+
+After editing Next config, env files, Docker Compose, Prisma schema/seed, or anything that affects the running app or DB container, restart the dev containers so changes apply:
+
+```powershell
+Set-Location "e:\Projects\New folder\blissful-soul"; .\restart-dev-docker.ps1
+```
+
+Or run:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.dev.yml restart db app
+```
+
+Do this automatically after such edits unless the user explicitly asks not to.

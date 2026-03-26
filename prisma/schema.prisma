@@ -1,0 +1,560 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ProductType {
+  PHYSICAL
+  DIGITAL
+}
+
+enum ServiceType {
+  AUDIO
+  VIDEO
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum DigitalAssetType {
+  YOUTUBE_LINK
+  PDF
+  EBOOK
+}
+
+enum BannerPosition {
+  HOME_HERO
+  HOME_SALE
+  SHOP_TOP
+}
+
+enum PopupTrigger {
+  PAGE_LOAD
+  EXIT_INTENT
+  SCROLL_DEPTH
+  TIMED
+}
+
+enum PopupFrequency {
+  ONCE
+  SESSION
+  ALWAYS
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+  BUY_X_GET_Y
+  FREE_SHIPPING
+}
+
+enum PromoRuleType {
+  BUY_X_GET_Y
+  FREE_GIFT_THRESHOLD
+}
+
+enum EmailLogStatus {
+  SENT
+  FAILED
+}
+
+enum EmailRelatedType {
+  ORDER
+  BOOKING
+  CONTACT
+  REFUND
+}
+
+enum ReminderType {
+  SESSION_REMINDER_24H
+  SESSION_REMINDER_1H
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  passwordHash String
+  phone        String?
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+
+  bookings       Booking[]
+  cartItems      CartItem[]
+  wishlistItems  WishlistItem[]
+  orders         Order[]
+  reviews        Review[]
+  couponUsages   CouponUsage[]
+  digitalPurchases DigitalPurchase[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProductCategory {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  sortOrder Int       @default(0)
+  products  Product[]
+}
+
+model ShippingClass {
+  id          String    @id @default(cuid())
+  name        String
+  rate        Int       @default(0) // paise or rupees * 100 - use rupees in app * 100 for Razorpay consistency - actually plan says INR flat rate, store as paise (amount in smallest unit)
+  freeAbove   Int?      // order subtotal in paise above which shipping is free
+  description String?
+  products    Product[]
+}
+
+model Product {
+  id               String       @id @default(cuid())
+  name             String
+  slug             String       @unique
+  description      String       @db.Text
+  categoryId       String
+  productType      ProductType  @default(PHYSICAL)
+  price            Int          // paise
+  salePrice        Int?
+  stock            Int          @default(0)
+  images           String[]
+  healingProperties String?     @db.Text
+  wearHand         String?
+  shippingClassId  String?
+  hsnCode          String?
+  gstRateBps       Int          @default(1800) // basis points e.g. 1800 = 18%
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  category      ProductCategory @relation(fields: [categoryId], references: [id])
+  shippingClass ShippingClass?  @relation(fields: [shippingClassId], references: [id])
+  variants      ProductVariant[]
+  digitalAssets DigitalAsset[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+}
+
+model ProductVariant {
+  id        String @id @default(cuid())
+  productId String
+  name      String
+  options   Json   // [{ label, priceAdjustment, stockOverride }]
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model DigitalAsset {
+  id                 String           @id @default(cuid())
+  productId          String
+  assetType          DigitalAssetType
+  url                String
+  fileName           String?
+  fileSize           Int?
+  accessInstructions String?          @db.Text
+  createdAt          DateTime         @default(now())
+
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  purchases  DigitalPurchase[]
+}
+
+model DigitalPurchase {
+  id             String   @id @default(cuid())
+  userId         String?
+  guestEmail     String?
+  orderId        String
+  productId      String
+  digitalAssetId String
+  accessGrantedAt DateTime @default(now())
+  accessUrl      String?
+  expiresAt      DateTime?
+
+  user   User?        @relation(fields: [userId], references: [id])
+  order  Order        @relation(fields: [orderId], references: [id])
+  asset  DigitalAsset @relation(fields: [digitalAssetId], references: [id])
+
+  @@index([guestEmail])
+}
+
+model Service {
+  id              String      @id @default(cuid())
+  name            String
+  type            ServiceType
+  price           Int
+  durationMinutes Int
+  staffId         String?
+  bufferMinutes   Int         @default(0)
+  isActive        Boolean     @default(true)
+  description     String?     @db.Text
+
+  bookings Booking[]
+}
+
+model Booking {
+  id              String          @id @default(cuid())
+  userId          String?
+  guestName       String?
+  guestEmail      String?
+  guestPhone      String?
+  serviceId       String
+  scheduledAt     DateTime
+  endAt           DateTime
+  status          BookingStatus   @default(PENDING)
+  paymentStatus   PaymentStatus   @default(PENDING)
+  rzpOrderId      String?
+  rzpPaymentId    String?
+  rzpSignature    String?
+  amountPaid      Int             @default(0)
+  gcalEventId     String?
+  customerNotes   String?         @db.Text
+  adminNotes      String?         @db.Text
+  cancelledAt     DateTime?
+  cancelReason    String?
+  rescheduledFrom DateTime?
+  createdAt       DateTime        @default(now())
+
+  user     User?             @relation(fields: [userId], references: [id])
+  service  Service           @relation(fields: [serviceId], references: [id])
+  reminders ScheduledReminder[]
+}
+
+model AvailabilityRule {
+  id        String  @id @default(cuid())
+  dayOfWeek Int     // 0-6
+  startTime String  // HH:mm
+  endTime   String
+  isActive  Boolean @default(true)
+}
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  startTime String?
+  endTime   String?
+  reason    String?
+}
+
+model BookingSettings {
+  id                     String  @id @default("singleton")
+  slotDurationMinutes    Int     @default(30)
+  bufferBetweenSlots     Int     @default(15)
+  maxAdvanceBookingDays  Int     @default(60)
+  minAdvanceBookingHours Int     @default(2)
+  cancellationPolicyHours Int    @default(24)
+  gcalCalendarId         String?
+  gcalSyncEnabled        Boolean @default(false)
+  gcalRefreshToken       String? @db.Text
+  autoConfirm            Boolean @default(true)
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  userId    String?
+  sessionId String?
+  productId String
+  quantity  Int    @default(1)
+  variantSelection Json?
+
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model WishlistItem {
+  id        String @id @default(cuid())
+  userId    String
+  productId String
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  userId           String?
+  guestName        String?
+  guestEmail       String?
+  guestPhone       String?
+  status           OrderStatus   @default(PENDING)
+  subtotal         Int
+  discount         Int           @default(0)
+  couponId         String?
+  tax              Int           @default(0)
+  shippingAmount   Int           @default(0)
+  total            Int
+  rzpOrderId       String?
+  rzpPaymentId     String?
+  rzpSignature     String?
+  paymentStatus    PaymentStatus @default(PENDING)
+  paymentMethod    String?
+  refundId         String?
+  refundStatus     String?
+  refundAmount     Int?
+  shippingAddress  Json?
+  billingAddress   Json?
+  notes            String?       @db.Text
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user            User?            @relation(fields: [userId], references: [id])
+  coupon          CouponCode?      @relation(fields: [couponId], references: [id])
+  items           OrderItem[]
+  invoice         Invoice?
+  shipment        OrderShipment?
+  digitalPurchases DigitalPurchase[]
+  couponUsages    CouponUsage[]
+}
+
+model OrderItem {
+  id               String @id @default(cuid())
+  orderId          String
+  productId        String
+  variantSelection Json?
+  quantity         Int
+  unitPrice        Int
+  gstRateBps       Int    @default(1800)
+  hsnCode          String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model OrderShipment {
+  id             String    @id @default(cuid())
+  orderId        String    @unique
+  courierName    String?
+  trackingNumber String?
+  trackingUrl    String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  notes          String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  text      String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model EmailLog {
+  id           String           @id @default(cuid())
+  to           String
+  subject      String
+  templateName String
+  status       EmailLogStatus
+  relatedType  EmailRelatedType?
+  relatedId    String?
+  error        String?          @db.Text
+  sentAt       DateTime         @default(now())
+}
+
+model Banner {
+  id        String         @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  position  BannerPosition
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean        @default(true)
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+}
+
+model Popup {
+  id           String         @id @default(cuid())
+  title        String
+  content      String         @db.Text
+  imageUrl     String?
+  linkUrl      String?
+  triggerType  PopupTrigger
+  triggerValue Int?
+  showOnPages  String[]
+  frequency    PopupFrequency @default(SESSION)
+  startDate    DateTime?
+  endDate      DateTime?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+}
+
+model CouponCode {
+  id                     String       @id @default(cuid())
+  code                   String       @unique
+  description            String?
+  discountType           DiscountType
+  discountValue          Int          // percent * 100 or paise depending on type - app interprets
+  minCartTotal           Int?
+  maxDiscount            Int?
+  maxUses                Int?
+  usedCount              Int          @default(0)
+  perUserLimit           Int          @default(1)
+  validFrom              DateTime?
+  validUntil             DateTime?
+  isActive               Boolean      @default(true)
+  applicableCategoryIds  String[]
+  applicableProductIds   String[]
+  createdAt              DateTime     @default(now())
+
+  usages CouponUsage[]
+  orders Order[]
+}
+
+model CouponUsage {
+  id             String   @id @default(cuid())
+  couponId       String
+  userId         String?
+  guestEmail     String?
+  orderId        String?
+  discountAmount Int
+  usedAt         DateTime @default(now())
+
+  coupon CouponCode @relation(fields: [couponId], references: [id])
+  user   User?      @relation(fields: [userId], references: [id])
+  order  Order?     @relation(fields: [orderId], references: [id])
+
+  @@index([guestEmail])
+}
+
+model PromoRule {
+  id        String        @id @default(cuid())
+  type      PromoRuleType
+  config    Json
+  isActive  Boolean       @default(true)
+}
+
+model LegalPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model ScheduledReminder {
+  id           String       @id @default(cuid())
+  bookingId    String
+  reminderType ReminderType
+  scheduledFor DateTime
+  sent         Boolean      @default(false)
+  sentAt       DateTime?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model BusinessSettings {
+  id                 String  @id @default("singleton")
+  businessName       String
+  gstin              String?
+  pan                String?
+  address            String  @db.Text
+  state              String
+  stateCode          String
+  phone              String
+  email              String
+  logoUrl            String?
+  bankName           String?
+  bankAccount        String?
+  bankIfsc           String?
+  invoicePrefix      String  @default("TBS")
+  nextInvoiceNumber  Int     @default(1)
+  fbPixelId          String?
+  fbPixelEnabled     Boolean @default(false)
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  invoiceNumber  String   @unique
+  orderId        String   @unique
+  invoiceDate    DateTime @default(now())
+  buyerName      String
+  buyerAddress   Json
+  buyerGstin     String?
+  buyerState     String
+  buyerStateCode String
+  items          Json
+  subtotal       Int
+  cgst           Int
+  sgst           Int
+  igst           Int
+  totalTax       Int
+  grandTotal     Int
+  placeOfSupply  String
+  isInterState   Boolean
+  pdfUrl         String?
+  createdAt      DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
