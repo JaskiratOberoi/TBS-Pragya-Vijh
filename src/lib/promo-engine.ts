@@ -1,4 +1,4 @@
-import type { Product } from "@prisma/client";
+import type { ProductLike } from "@/lib/types/commerce";
 
 export type CartLine = {
   productId: string;
@@ -18,7 +18,7 @@ export type PromoResult = {
 
 const GIFT_SLUG = "money-potli-gift";
 
-function effectiveUnitPrice(p: Product) {
+function effectiveUnitPrice(p: Pick<ProductLike, "price" | "salePrice">) {
   return p.salePrice != null && p.salePrice < p.price ? p.salePrice : p.price;
 }
 

@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bookings",
+  "info": {
+    "singularName": "booking",
+    "pluralName": "bookings",
+    "displayName": "Booking"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "guestName": { "type": "string" },
+    "guestEmail": { "type": "email" },
+    "guestPhone": { "type": "string" },
+    "scheduledAt": { "type": "datetime", "required": true },
+    "endAt": { "type": "datetime", "required": true },
+    "status": {
+      "type": "enumeration",
+      "enum": ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "RESCHEDULED", "NO_SHOW"],
+      "default": "PENDING"
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": ["PENDING", "PAID", "FAILED", "REFUNDED"],
+      "default": "PENDING"
+    },
+    "rzpOrderId": { "type": "string" },
+    "rzpPaymentId": { "type": "string" },
+    "rzpSignature": { "type": "text" },
+    "amountPaid": { "type": "integer", "default": 0 },
+    "gcalEventId": { "type": "string" },
+    "customerNotes": { "type": "text" },
+    "adminNotes": { "type": "text" },
+    "cancelledAt": { "type": "datetime" },
+    "cancelReason": { "type": "text" },
+    "rescheduledFrom": { "type": "datetime" },
+    "legacyId": { "type": "string" },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "bookings"
+    },
+    "service": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::service.service",
+      "inversedBy": "bookings"
+    },
+    "reminders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::scheduled-reminder.scheduled-reminder",
+      "mappedBy": "booking"
+    }
+  }
+}

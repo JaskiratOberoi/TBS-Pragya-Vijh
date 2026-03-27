@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "coupon_usages",
+  "info": {
+    "singularName": "coupon-usage",
+    "pluralName": "coupon-usages",
+    "displayName": "Coupon Usage"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "guestEmail": { "type": "email" },
+    "discountAmount": { "type": "integer", "required": true },
+    "usedAt": { "type": "datetime" },
+    "coupon": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::coupon-code.coupon-code",
+      "inversedBy": "usages"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "couponUsages"
+    },
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "couponUsages"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "services",
+  "info": {
+    "singularName": "service",
+    "pluralName": "services",
+    "displayName": "Service"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "type": {
+      "type": "enumeration",
+      "enum": ["AUDIO", "VIDEO"],
+      "required": true
+    },
+    "price": { "type": "integer", "required": true },
+    "durationMinutes": { "type": "integer", "required": true },
+    "staffId": { "type": "string" },
+    "bufferMinutes": { "type": "integer", "default": 0 },
+    "isActive": { "type": "boolean", "default": true },
+    "description": { "type": "text" },
+    "bookings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::booking.booking",
+      "mappedBy": "service"
+    }
+  }
+}

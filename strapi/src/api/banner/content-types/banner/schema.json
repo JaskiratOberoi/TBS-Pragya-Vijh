@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "banners",
+  "info": {
+    "singularName": "banner",
+    "pluralName": "banners",
+    "displayName": "Banner"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "imageUrl": { "type": "string", "required": true },
+    "linkUrl": { "type": "string" },
+    "position": {
+      "type": "enumeration",
+      "enum": ["HOME_HERO", "HOME_SALE", "SHOP_TOP"],
+      "required": true
+    },
+    "startDate": { "type": "datetime" },
+    "endDate": { "type": "datetime" },
+    "isActive": { "type": "boolean", "default": true },
+    "sortOrder": { "type": "integer", "default": 0 }
+  }
+}

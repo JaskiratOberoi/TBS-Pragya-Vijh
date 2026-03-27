@@ -1,0 +1,20 @@
+{
+  "kind": "collectionType",
+  "collectionName": "password_reset_tokens",
+  "info": {
+    "singularName": "password-reset-token",
+    "pluralName": "password-reset-tokens",
+    "displayName": "Password Reset Token"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "token": { "type": "string", "required": true, "unique": true },
+    "expiresAt": { "type": "datetime", "required": true },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "passwordResetTokens"
+    }
+  }
+}

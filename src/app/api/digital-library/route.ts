@@ -1,23 +1,33 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ items: [] });
-  const items = await prisma.digitalPurchase.findMany({
-    where: { userId: session.user.id },
-    include: { asset: { include: { product: true } } },
-    orderBy: { accessGrantedAt: "desc" },
-  });
+  const j = await strapiFetch<{ data?: unknown[] }>(
+    `/api/digital-purchases?filters[user][documentId][$eq]=${encodeURIComponent(session.user.id)}&populate[asset][populate][product]=true&pagination[pageSize]=100`
+  );
+  const rows = (j.data ?? []).map((x) => normalizeDoc(x));
   return NextResponse.json({
-    items: items.map((i) => ({
-      id: i.id,
-      productName: i.asset.product.name,
-      assetType: i.asset.assetType,
-      url: i.accessUrl ?? i.asset.url,
-      instructions: i.asset.accessInstructions,
-    })),
+    items: rows.map((row) => {
+      const r = row as Record<string, unknown>;
+      const asset = r.asset as
+        | {
+            assetType?: string;
+            url?: string;
+            accessInstructions?: string;
+            product?: { name?: string };
+          }
+        | undefined;
+      return {
+        id: String(r.documentId ?? r.id ?? ""),
+        productName: asset?.product?.name ?? "Product",
+        assetType: asset?.assetType ?? "",
+        url: String(r.accessUrl ?? asset?.url ?? ""),
+        instructions: asset?.accessInstructions,
+      };
+    }),
   });
 }

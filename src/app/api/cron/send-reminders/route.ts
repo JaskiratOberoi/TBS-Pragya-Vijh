@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
 import { sendRawEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
@@ -8,28 +8,50 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const now = new Date();
-  const due = await prisma.scheduledReminder.findMany({
-    where: { sent: false, scheduledFor: { lte: now } },
-    include: { booking: { include: { service: true, user: true } } },
-    take: 50,
-  });
-  for (const r of due) {
-    const b = r.booking;
-    const when = b.scheduledAt.toLocaleString("en-IN");
+  const j = await strapiFetch<{ data?: unknown[] }>(
+    `/api/scheduled-reminders?filters[sent][$eq]=false&filters[scheduledFor][$lte]=${encodeURIComponent(now.toISOString())}&populate[booking][populate][service]=true&populate[booking][populate][user]=true&pagination[pageSize]=50`
+  );
+  const due = (j.data ?? []).map((x) => normalizeDoc(x));
+  for (const raw of due) {
+    const r = raw as Record<string, unknown>;
+    const rDoc = String(r.documentId ?? r.id ?? "");
+    const b = r.booking as
+      | {
+          scheduledAt?: string;
+          guestEmail?: string;
+          user?: { email?: string };
+          service?: { name?: string };
+        }
+      | undefined;
+    if (!b) {
+      await strapiFetch(`/api/scheduled-reminders/${rDoc}`, {
+        method: "PUT",
+        body: JSON.stringify({ data: { sent: true, sentAt: now.toISOString() } }),
+      });
+      continue;
+    }
+    const when = b.scheduledAt ? new Date(b.scheduledAt).toLocaleString("en-IN") : "";
     const to = b.user?.email ?? b.guestEmail;
+    const bookingId = (b as { documentId?: string }).documentId ?? "";
     if (!to) {
-      await prisma.scheduledReminder.update({ where: { id: r.id }, data: { sent: true, sentAt: new Date() } });
+      await strapiFetch(`/api/scheduled-reminders/${rDoc}`, {
+        method: "PUT",
+        body: JSON.stringify({ data: { sent: true, sentAt: now.toISOString() } }),
+      });
       continue;
     }
     await sendRawEmail({
       to,
       subject: r.reminderType === "SESSION_REMINDER_1H" ? "Session in 1 hour" : "Reminder: your session tomorrow",
-      html: `<p>${b.service.name} — ${when}</p>`,
+      html: `<p>${b.service?.name ?? "Session"} — ${when}</p>`,
       templateName: "SessionReminder",
       relatedType: "BOOKING",
-      relatedId: b.id,
+      relatedId: String(bookingId),
     });
-    await prisma.scheduledReminder.update({ where: { id: r.id }, data: { sent: true, sentAt: new Date() } });
+    await strapiFetch(`/api/scheduled-reminders/${rDoc}`, {
+      method: "PUT",
+      body: JSON.stringify({ data: { sent: true, sentAt: now.toISOString() } }),
+    });
   }
   return NextResponse.json({ processed: due.length });
 }

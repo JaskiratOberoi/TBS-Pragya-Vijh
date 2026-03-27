@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc, unwrapList } from "@/lib/strapi";
+import { findProductBySlug, findProductBySlugFull } from "@/lib/strapi-queries";
+import { toProductTileModel } from "@/lib/strapi-mappers";
 import { formatINR } from "@/lib/utils";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 import { Badge } from "@/components/ui/badge";
@@ -14,49 +16,64 @@ import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const p = await prisma.product.findUnique({ where: { slug } });
+  const p = await findProductBySlug(slug);
   if (!p) return {};
-  return { title: p.name, openGraph: { title: p.name, images: p.images } };
+  const imgs = p.images;
+  const images = Array.isArray(imgs) ? imgs.map(String) : [];
+  return { title: p.name, openGraph: { title: p.name, images } };
 }
 
 export const revalidate = 60;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: { category: true, shippingClass: true, variants: true, digitalAssets: true },
-  });
-  if (!product || !product.isActive) notFound();
+  const raw = await findProductBySlugFull(slug);
+  if (!raw || raw.isActive === false) notFound();
+  const product = raw as Record<string, unknown>;
+  const category = (product.category ?? {}) as { slug?: string; name?: string; documentId?: string };
+  const productDocId = String(product.documentId ?? product.id ?? "");
+  const catDocId = String(category.documentId ?? "");
 
-  const [related, reviewRows] = await Promise.all([
-    prisma.product.findMany({
-      where: { isActive: true, categoryId: product.categoryId, NOT: { id: product.id } },
-      take: 8,
-    }),
-    prisma.review.findMany({
-      where: { productId: product.id },
-      include: { user: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    }),
+  const [relatedJson, reviewsJson] = await Promise.all([
+    strapiFetch<{ data?: unknown[] }>(
+      `/api/products?filters[isActive][$eq]=true&filters[category][documentId][$eq]=${encodeURIComponent(catDocId)}&filters[documentId][$ne]=${encodeURIComponent(productDocId)}&pagination[pageSize]=8`,
+      { next: { revalidate: 60 } }
+    ),
+    strapiFetch<{ data?: unknown[] }>(
+      `/api/reviews?filters[product][documentId][$eq]=${encodeURIComponent(productDocId)}&populate[user]=true&sort[0]=createdAt:desc&pagination[pageSize]=20`,
+      { next: { revalidate: 60 } }
+    ),
   ]);
 
+  const related = (relatedJson.data ?? []).map((x) => toProductTileModel(normalizeDoc(x)));
+  const reviewRows = unwrapList(reviewsJson) as Array<{
+    id?: string;
+    rating?: number;
+    comment?: string;
+    user?: { username?: string; email?: string };
+  }>;
+
   const reviews = reviewRows.map((r) => ({
-    id: r.id,
-    rating: r.rating,
-    comment: r.comment,
-    author: r.user.name ?? "Customer",
+    id: String(r.id),
+    rating: Number(r.rating ?? 0),
+    comment: String(r.comment ?? ""),
+    author: r.user?.username ?? r.user?.email ?? "Customer",
   }));
 
-  const unit = effectiveUnitPrice(product);
-  const off = product.salePrice != null && product.salePrice < product.price ? Math.round((1 - product.salePrice / product.price) * 100) : 0;
+  const images = Array.isArray(product.images) ? product.images.map(String) : [];
+  const unit = effectiveUnitPrice({
+    price: Number(product.price ?? 0),
+    salePrice: product.salePrice != null ? Number(product.salePrice) : null,
+  });
+  const price = Number(product.price ?? 0);
+  const salePrice = product.salePrice != null ? Number(product.salePrice) : null;
+  const off = salePrice != null && salePrice < price ? Math.round((1 - salePrice / price) * 100) : 0;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    image: product.images,
+    image: images,
     offers: { "@type": "Offer", priceCurrency: "INR", price: (unit / 100).toFixed(2) },
   };
 
@@ -68,17 +85,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           Shop
         </Link>
         <span className="mx-2">/</span>
-        <Link href={`/shop?category=${product.category.slug}`} className="hover:text-foreground">
-          {product.category.name}
+        <Link href={`/shop?category=${category.slug ?? ""}`} className="hover:text-foreground">
+          {category.name}
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">{product.name}</span>
+        <span className="text-foreground">{String(product.name)}</span>
       </nav>
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="relative aspect-square overflow-hidden rounded-4xl border border-border/40 bg-muted shadow-bento">
           <Image
-            src={product.images[0] ?? "/assets/products/placeholder.svg"}
-            alt={product.name}
+            src={images[0] ?? "/assets/products/placeholder.svg"}
+            alt={String(product.name)}
             fill
             className="object-cover"
             priority
@@ -93,29 +110,29 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           )}
         </div>
         <div>
-          <h1 className="font-serif text-3xl font-bold text-foreground md:text-4xl">{product.name}</h1>
+          <h1 className="font-serif text-3xl font-bold text-foreground md:text-4xl">{String(product.name)}</h1>
           <div className="mt-4 flex items-center gap-3">
-            {product.salePrice != null && product.salePrice < product.price && (
-              <span className="text-lg text-muted-foreground line-through">{formatINR(product.price)}</span>
+            {salePrice != null && salePrice < price && (
+              <span className="text-lg text-muted-foreground line-through">{formatINR(price)}</span>
             )}
             <span className="inline-flex rounded-full bg-primary px-4 py-2 text-xl font-semibold text-primary-foreground shadow-bento-sm">
               {formatINR(unit)}
             </span>
           </div>
           {product.productType === "PHYSICAL" && (
-            <p className="mt-3 text-sm text-muted-foreground">In stock: {product.stock}</p>
+            <p className="mt-3 text-sm text-muted-foreground">In stock: {Number(product.stock ?? 0)}</p>
           )}
           <p className="mt-4 text-xs text-muted-foreground">
             Free Money Potli on orders ≥ ₹1499 · Buy 3 Get 1 Free (auto-applied in cart)
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <AddToCartButton productId={product.id} />
-            <WishlistButton productId={product.id} />
+            <AddToCartButton productId={productDocId} />
+            <WishlistButton productId={productDocId} />
           </div>
           <ProductDetailTabs
-            description={product.description}
-            healing={product.healingProperties}
-            wearHand={product.wearHand}
+            description={String(product.description ?? "")}
+            healing={product.healingProperties != null ? String(product.healingProperties) : null}
+            wearHand={product.wearHand != null ? String(product.wearHand) : null}
             isDigital={product.productType === "DIGITAL"}
             slug={slug}
             reviews={reviews}
@@ -127,7 +144,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <h2 className="font-serif text-xl font-bold text-foreground md:text-2xl">Related products</h2>
           <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
             {related.map((p) => (
-              <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
+              <ProductTile
+                key={p.id}
+                product={p}
+                unitPricePaise={effectiveUnitPrice({ price: p.price, salePrice: p.salePrice })}
+              />
             ))}
           </StaggerGrid>
         </section>

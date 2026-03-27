@@ -1,0 +1,84 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": {
+    "singularName": "product",
+    "pluralName": "products",
+    "displayName": "Product"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "slug": { "type": "string", "required": true, "unique": true },
+    "description": { "type": "text", "required": true },
+    "productType": {
+      "type": "enumeration",
+      "enum": ["PHYSICAL", "DIGITAL"],
+      "default": "PHYSICAL",
+      "required": true
+    },
+    "price": { "type": "integer", "required": true },
+    "salePrice": { "type": "integer" },
+    "stock": { "type": "integer", "default": 0 },
+    "images": { "type": "json" },
+    "healingProperties": { "type": "text" },
+    "wearHand": { "type": "string" },
+    "hsnCode": { "type": "string" },
+    "gstRateBps": { "type": "integer", "default": 1800 },
+    "isActive": { "type": "boolean", "default": true },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-category.product-category",
+      "inversedBy": "products"
+    },
+    "shippingClass": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::shipping-class.shipping-class",
+      "inversedBy": "products"
+    },
+    "variants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product-variant.product-variant",
+      "mappedBy": "product"
+    },
+    "digitalAssets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::digital-asset.digital-asset",
+      "mappedBy": "product"
+    },
+    "cartItems": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::cart-item.cart-item",
+      "mappedBy": "product"
+    },
+    "wishlistItems": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::wishlist-item.wishlist-item",
+      "mappedBy": "product"
+    },
+    "orderItems": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-item.order-item",
+      "mappedBy": "product"
+    },
+    "reviews": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::review.review",
+      "mappedBy": "product"
+    },
+    "digitalPurchases": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::digital-purchase.digital-purchase",
+      "mappedBy": "product"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "coupon_codes",
+  "info": {
+    "singularName": "coupon-code",
+    "pluralName": "coupon-codes",
+    "displayName": "Coupon Code"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "code": { "type": "string", "required": true, "unique": true },
+    "description": { "type": "text" },
+    "discountType": {
+      "type": "enumeration",
+      "enum": ["PERCENTAGE", "FLAT", "BUY_X_GET_Y", "FREE_SHIPPING"],
+      "required": true
+    },
+    "discountValue": { "type": "integer", "required": true },
+    "minCartTotal": { "type": "integer" },
+    "maxDiscount": { "type": "integer" },
+    "maxUses": { "type": "integer" },
+    "usedCount": { "type": "integer", "default": 0 },
+    "perUserLimit": { "type": "integer", "default": 1 },
+    "validFrom": { "type": "datetime" },
+    "validUntil": { "type": "datetime" },
+    "isActive": { "type": "boolean", "default": true },
+    "applicableCategoryIds": { "type": "json" },
+    "applicableProductIds": { "type": "json" },
+    "usages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::coupon-usage.coupon-usage",
+      "mappedBy": "coupon"
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "coupon"
+    }
+  }
+}

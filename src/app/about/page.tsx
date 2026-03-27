@@ -1,11 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 
 export default async function AboutPage() {
-  const testimonials = await prisma.testimonial.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
+  const j = await strapiFetch<{ data?: unknown[] }>(
+    `/api/testimonials?filters[isActive][$eq]=true&sort[0]=sortOrder:asc&pagination[pageSize]=100`,
+    { next: { revalidate: 60 } }
+  );
+  const testimonials = (j.data ?? []).map((x) => {
+    const t = normalizeDoc(x);
+    return { id: String(t.id), name: String(t.name), text: String(t.text) };
+  });
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="font-serif text-4xl font-bold text-primary">About the Master</h1>

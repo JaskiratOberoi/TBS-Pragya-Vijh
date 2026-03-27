@@ -1,0 +1,13 @@
+{
+  "kind": "collectionType",
+  "collectionName": "commerce_placeholders",
+  "info": {
+    "singularName": "commerce-placeholder",
+    "pluralName": "commerce-placeholders",
+    "displayName": "Commerce Placeholder"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string" }
+  }
+}

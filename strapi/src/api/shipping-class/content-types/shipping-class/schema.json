@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "shipping_classes",
+  "info": {
+    "singularName": "shipping-class",
+    "pluralName": "shipping-classes",
+    "displayName": "Shipping Class"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "rate": { "type": "integer", "required": true, "default": 0 },
+    "freeAbove": { "type": "integer" },
+    "description": { "type": "text" },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "shippingClass"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "digital_purchases",
+  "info": {
+    "singularName": "digital-purchase",
+    "pluralName": "digital-purchases",
+    "displayName": "Digital Purchase"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "guestEmail": { "type": "email" },
+    "accessGrantedAt": { "type": "datetime" },
+    "accessUrl": { "type": "string" },
+    "expiresAt": { "type": "datetime" },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "digitalPurchases"
+    },
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "digitalPurchases"
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "digitalPurchases"
+    },
+    "asset": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::digital-asset.digital-asset",
+      "inversedBy": "purchases"
+    }
+  }
+}

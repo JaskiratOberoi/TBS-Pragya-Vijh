@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch } from "@/lib/strapi";
 import { attachCartCookie, CART_COOKIE, newCartSessionId } from "@/lib/cart-session";
 import { loadCartItems } from "@/lib/cart-query";
 import { effectiveUnitPrice, buildPromoSummary, type CartLine } from "@/lib/promo-engine";
 import { computeShippingForPhysicalItems, cartHasPhysical } from "@/lib/shipping";
+import { findProductByDocumentId, findProductBySlug } from "@/lib/strapi-queries";
+import { normalizeDoc } from "@/lib/strapi";
 
 async function getOwner(req: Request) {
   const session = await getServerSession(authOptions);
@@ -50,7 +52,7 @@ async function summarizeCart(
   items: Awaited<ReturnType<typeof loadCartItems>>
 ) {
   if (items.length === 0) return emptySummary();
-  const giftProduct = await prisma.product.findUnique({ where: { slug: "money-potli-gift" } });
+  const giftProduct = await findProductBySlug("money-potli-gift");
   const threshold = 149900; // ₹1499
   const lines: CartLine[] = items.map((i) => ({
     productId: i.productId,
@@ -102,6 +104,22 @@ function serializeItems(items: Awaited<ReturnType<typeof loadCartItems>>) {
   }));
 }
 
+async function findExistingCartItem(opts: {
+  userId: string | null;
+  sessionId: string | null;
+  productDocumentId: string;
+}): Promise<{ documentId: string; quantity: number } | null> {
+  const { userId, sessionId, productDocumentId } = opts;
+  const filter = userId
+    ? `filters[user][documentId][$eq]=${encodeURIComponent(userId)}&filters[product][documentId][$eq]=${encodeURIComponent(productDocumentId)}`
+    : `filters[sessionId][$eq]=${encodeURIComponent(sessionId!)}&filters[product][documentId][$eq]=${encodeURIComponent(productDocumentId)}`;
+  const j = await strapiFetch<{ data?: unknown[] }>(`/api/cart-items?${filter}&pagination[pageSize]=1`);
+  const first = j.data?.[0];
+  if (!first) return null;
+  const d = normalizeDoc(first);
+  return { documentId: String(d.documentId ?? d.id), quantity: Number(d.quantity ?? 1) };
+}
+
 export async function POST(req: Request) {
   const body = (await req.json()) as { productId?: string; quantity?: number; variantSelection?: unknown };
   if (!body.productId || !body.quantity || body.quantity < 1) {
@@ -117,30 +135,39 @@ export async function POST(req: Request) {
     if (!sessionId) sessionId = newCartSessionId();
   }
 
-  const product = await prisma.product.findUnique({ where: { id: body.productId } });
-  if (!product || !product.isActive) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-  if (product.stock < body.quantity && product.productType === "PHYSICAL") {
+  const product = await findProductByDocumentId(body.productId);
+  if (!product || product.isActive === false) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  if ((product.stock ?? 0) < body.quantity && product.productType === "PHYSICAL") {
     return NextResponse.json({ error: "Insufficient stock" }, { status: 400 });
   }
 
-  const existing = await prisma.cartItem.findFirst({
-    where: userId ? { userId, productId: body.productId } : { sessionId: sessionId!, productId: body.productId },
+  const existing = await findExistingCartItem({
+    userId,
+    sessionId: userId ? null : sessionId,
+    productDocumentId: body.productId,
   });
 
   if (existing) {
-    await prisma.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: existing.quantity + body.quantity, variantSelection: body.variantSelection as object | undefined },
+    await strapiFetch(`/api/cart-items/${existing.documentId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        data: {
+          quantity: existing.quantity + body.quantity,
+          variantSelection: body.variantSelection ?? null,
+        },
+      }),
     });
   } else {
-    await prisma.cartItem.create({
-      data: {
-        userId: userId ?? undefined,
-        sessionId: userId ? undefined : sessionId!,
-        productId: body.productId,
-        quantity: body.quantity,
-        variantSelection: body.variantSelection as object | undefined,
-      },
+    const data: Record<string, unknown> = {
+      quantity: body.quantity,
+      variantSelection: body.variantSelection ?? null,
+      product: { connect: [body.productId] },
+    };
+    if (userId) data.user = { connect: [userId] };
+    else data.sessionId = sessionId;
+    await strapiFetch(`/api/cart-items`, {
+      method: "POST",
+      body: JSON.stringify({ data }),
     });
   }
 
@@ -161,15 +188,22 @@ export async function PATCH(req: Request) {
   const sessionId = match?.[1] ? decodeURIComponent(match[1]) : null;
   const userId = session?.user?.id ?? null;
 
-  const item = await prisma.cartItem.findUnique({ where: { id: body.itemId } });
+  const itemRes = await strapiFetch<{ data?: unknown }>(`/api/cart-items/${body.itemId}?populate=user`);
+  const item = itemRes.data ? normalizeDoc(itemRes.data) : null;
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (userId && item.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  if (!userId && item.sessionId !== sessionId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const itemUser = item.user as { documentId?: string } | undefined;
+  const itemSession = item.sessionId as string | undefined;
+  if (userId && itemUser?.documentId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!userId && itemSession !== sessionId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   if (body.quantity <= 0) {
-    await prisma.cartItem.delete({ where: { id: body.itemId } });
+    await strapiFetch(`/api/cart-items/${body.itemId}`, { method: "DELETE" });
   } else {
-    await prisma.cartItem.update({ where: { id: body.itemId }, data: { quantity: body.quantity } });
+    await strapiFetch(`/api/cart-items/${body.itemId}`, {
+      method: "PUT",
+      body: JSON.stringify({ data: { quantity: body.quantity } }),
+    });
   }
 
   const owner = userId
@@ -189,11 +223,16 @@ export async function DELETE(req: Request) {
   const match = cookieHeader.match(new RegExp(`${CART_COOKIE}=([^;]+)`));
   const sessionId = match?.[1] ? decodeURIComponent(match[1]) : null;
   const userId = session?.user?.id ?? null;
-  const item = await prisma.cartItem.findUnique({ where: { id: itemId } });
+
+  const itemRes = await strapiFetch<{ data?: unknown }>(`/api/cart-items/${itemId}?populate=user`);
+  const item = itemRes.data ? normalizeDoc(itemRes.data) : null;
   if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (userId && item.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  if (!userId && item.sessionId !== sessionId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  await prisma.cartItem.delete({ where: { id: itemId } });
+  const itemUser = item.user as { documentId?: string } | undefined;
+  const itemSession = item.sessionId as string | undefined;
+  if (userId && itemUser?.documentId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!userId && itemSession !== sessionId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  await strapiFetch(`/api/cart-items/${itemId}`, { method: "DELETE" });
   const owner = userId
     ? { kind: "user" as const, userId }
     : { kind: "guest" as const, sessionId: sessionId! };

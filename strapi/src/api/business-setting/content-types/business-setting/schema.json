@@ -1,0 +1,28 @@
+{
+  "kind": "singleType",
+  "collectionName": "business_setting",
+  "info": {
+    "singularName": "business-setting",
+    "pluralName": "business-settings",
+    "displayName": "Business Settings"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "businessName": { "type": "string", "required": true },
+    "gstin": { "type": "string" },
+    "pan": { "type": "string" },
+    "address": { "type": "text", "required": true },
+    "state": { "type": "string", "required": true },
+    "stateCode": { "type": "string", "required": true },
+    "phone": { "type": "string", "required": true },
+    "email": { "type": "email", "required": true },
+    "logoUrl": { "type": "string" },
+    "bankName": { "type": "string" },
+    "bankAccount": { "type": "string" },
+    "bankIfsc": { "type": "string" },
+    "invoicePrefix": { "type": "string", "default": "TBS" },
+    "nextInvoiceNumber": { "type": "integer", "default": 1 },
+    "fbPixelId": { "type": "string" },
+    "fbPixelEnabled": { "type": "boolean", "default": false }
+  }
+}

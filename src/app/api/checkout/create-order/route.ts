@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, commerceCreateOrder } from "@/lib/strapi";
 import { loadCartItems, resolveCartOwner } from "@/lib/cart-query";
 import { computeOrderTotals } from "@/lib/order-build";
 import { createRzpOrder } from "@/lib/razorpay";
 import { validateCouponForCart } from "@/lib/coupon-validator";
 import { rowsToCartLines } from "@/lib/order-build";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
+import {
+  countCouponUsagesForGuest,
+  countCouponUsagesForUser,
+  findCouponByCode,
+  findProductBySlug,
+  getBusinessSettings,
+} from "@/lib/strapi-queries";
 
 function normEmail(s: string) {
   return s.trim().toLowerCase();
@@ -52,9 +59,9 @@ export async function POST(req: Request) {
     guestPhone = gp;
   }
 
-  const gift = await prisma.product.findUnique({ where: { slug: "money-potli-gift" } });
-  const business = await prisma.businessSettings.findUnique({ where: { id: "singleton" } });
-  const sellerState = business?.stateCode ?? "07";
+  const gift = await findProductBySlug("money-potli-gift");
+  const business = await getBusinessSettings();
+  const sellerState = (business?.stateCode as string) ?? "07";
 
   const hasPhysical = rows.some((r) => r.product.productType === "PHYSICAL");
   if (hasPhysical && !body.shippingAddress) {
@@ -64,21 +71,19 @@ export async function POST(req: Request) {
   const buyerStateCode = (body.shippingAddress?.stateCode as string) || "07";
 
   let couponDiscountPaise = 0;
-  let couponId: string | undefined;
+  let couponDocumentId: string | undefined;
   if (body.couponCode) {
-    const c = await prisma.couponCode.findUnique({ where: { code: body.couponCode.trim().toUpperCase() } });
+    const c = await findCouponByCode(body.couponCode.trim().toUpperCase());
     if (!c) return NextResponse.json({ error: "Invalid coupon" }, { status: 400 });
     const uses = userId
-      ? await prisma.couponUsage.count({ where: { couponId: c.id, userId } })
-      : await prisma.couponUsage.count({
-          where: { couponId: c.id, guestEmail: guestEmail ?? "" },
-        });
+      ? await countCouponUsagesForUser(c.id, userId)
+      : await countCouponUsagesForGuest(c.id, guestEmail ?? "");
     const lines = rowsToCartLines(rows as Parameters<typeof rowsToCartLines>[0]);
     const sub = lines.reduce((s, l) => s + l.unitPricePaise * l.quantity, 0);
     const v = validateCouponForCart(c, lines, sub, uses);
     if (!v.ok) return NextResponse.json({ error: v.message }, { status: 400 });
     if (c.discountType !== "FREE_SHIPPING") couponDiscountPaise = v.discountPaise;
-    couponId = c.id;
+    couponDocumentId = c.id;
   }
 
   const totals = computeOrderTotals(rows as Parameters<typeof computeOrderTotals>[0], {
@@ -88,60 +93,70 @@ export async function POST(req: Request) {
     buyerStateCode,
   });
 
-  const order = await prisma.order.create({
-    data: {
-      userId,
+  const linesPayload = rows.map((r) => ({
+    productDocumentId: r.productId,
+    quantity: r.quantity,
+    variantSelection: r.variantSelection,
+    unitPrice: effectiveUnitPrice(r.product),
+    gstRateBps: r.product.gstRateBps,
+    hsnCode: r.product.hsnCode ?? undefined,
+  }));
+
+  let giftLine: Record<string, unknown> | null = null;
+  if (totals.giftProductIds.length && gift) {
+    giftLine = {
+      productDocumentId: gift.id,
+      gstRateBps: gift.gstRateBps,
+      hsnCode: gift.hsnCode ?? undefined,
+    };
+  }
+
+  let orderId: string;
+  try {
+    const created = await commerceCreateOrder({
+      userDocumentId: userId,
       guestName,
       guestEmail,
       guestPhone,
-      status: "PENDING",
-      paymentStatus: "PENDING",
-      subtotal: totals.subtotalPaise,
-      discount: totals.promoDiscountPaise + totals.couponDiscountPaise,
-      couponId,
-      tax: totals.taxPaise,
-      shippingAmount: totals.shippingPaise,
-      total: totals.totalPaise,
-      shippingAddress: body.shippingAddress ?? undefined,
-      billingAddress: body.billingAddress ?? body.shippingAddress ?? undefined,
-      items: {
-        create: [
-          ...rows.map((r) => ({
-            productId: r.productId,
-            quantity: r.quantity,
-            variantSelection: r.variantSelection as object | undefined,
-            unitPrice: effectiveUnitPrice(r.product),
-            gstRateBps: r.product.gstRateBps,
-            hsnCode: r.product.hsnCode ?? undefined,
-          })),
-          ...(totals.giftProductIds.length && gift
-            ? [
-                {
-                  productId: gift.id,
-                  quantity: 1,
-                  unitPrice: 0,
-                  gstRateBps: gift.gstRateBps,
-                  hsnCode: gift.hsnCode ?? undefined,
-                },
-              ]
-            : []),
-        ],
+      shippingAddress: body.shippingAddress,
+      billingAddress: body.billingAddress ?? body.shippingAddress,
+      couponDocumentId,
+      lines: linesPayload,
+      giftLine,
+      totals: {
+        totalPaise: totals.totalPaise,
+        subtotalPaise: totals.subtotalPaise,
+        promoDiscountPaise: totals.promoDiscountPaise,
+        couponDiscountPaise: totals.couponDiscountPaise,
+        taxPaise: totals.taxPaise,
+        shippingPaise: totals.shippingPaise,
       },
-    },
-  });
+    });
+    orderId = created.orderId;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Order create failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 
   try {
-    const rzp = await createRzpOrder(totals.totalPaise, order.id, { orderId: order.id });
-    await prisma.order.update({ where: { id: order.id }, data: { rzpOrderId: rzp.id } });
+    const rzp = await createRzpOrder(totals.totalPaise, orderId, { orderId });
+    await strapiFetch(`/api/orders/${orderId}`, {
+      method: "PUT",
+      body: JSON.stringify({ data: { rzpOrderId: rzp.id } }),
+    });
     return NextResponse.json({
-      orderId: order.id,
+      orderId,
       rzpOrderId: rzp.id,
       amount: totals.totalPaise,
       key: process.env.RAZORPAY_KEY_ID,
       currency: "INR",
     });
   } catch (e) {
-    await prisma.order.delete({ where: { id: order.id } });
+    try {
+      await strapiFetch(`/api/orders/${orderId}`, { method: "DELETE" });
+    } catch {
+      /* ignore */
+    }
     const msg = e instanceof Error ? e.message : "Payment init failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

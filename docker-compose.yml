@@ -1,30 +1,69 @@
 services:
-  db:
+  strapi-db:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - strapi_pgdata:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: blissful
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-blissful_dev}
-      POSTGRES_DB: blissful_soul
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: ${STRAPI_DB_PASSWORD:-strapi_dev}
+      POSTGRES_DB: strapi
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U blissful -d blissful_soul"]
+      test: ["CMD-SHELL", "pg_isready -U strapi"]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
+  strapi:
+    build: ./strapi
+    depends_on:
+      strapi-db:
+        condition: service_healthy
+    ports:
+      - "1337:1337"
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: strapi-db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: ${STRAPI_DB_PASSWORD:-strapi_dev}
+      JWT_SECRET: ${STRAPI_JWT_SECRET:-dev-jwt-secret-change-me}
+      ADMIN_JWT_SECRET: ${STRAPI_ADMIN_JWT_SECRET:-dev-admin-jwt-change-me}
+      APP_KEYS: ${STRAPI_APP_KEYS:-key1,key2,key3,key4}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      COMMERCE_INTERNAL_SECRET: ${COMMERCE_INTERNAL_SECRET:-dev-commerce-secret}
+    volumes:
+      - strapi_uploads:/opt/app/public/uploads
+    restart: unless-stopped
+
   app:
     build: .
     depends_on:
-      db:
-        condition: service_healthy
+      - strapi
     environment:
-      DATABASE_URL: postgresql://blissful:${DB_PASSWORD:-blissful_dev}@db:5432/blissful_soul
+      STRAPI_API_URL: http://strapi:1337
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-}
+      COMMERCE_INTERNAL_SECRET: ${COMMERCE_INTERNAL_SECRET:-dev-commerce-secret}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production-min-32-chars}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      CRON_SECRET: ${CRON_SECRET:-}
     volumes:
       - uploads:/app/public/uploads
     restart: unless-stopped
@@ -38,8 +77,10 @@ services:
       - uploads:/var/www/uploads:ro
     depends_on:
       - app
+      - strapi
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  strapi_pgdata:
+  strapi_uploads:
   uploads:

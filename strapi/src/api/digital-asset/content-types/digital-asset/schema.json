@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "digital_assets",
+  "info": {
+    "singularName": "digital-asset",
+    "pluralName": "digital-assets",
+    "displayName": "Digital Asset"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "assetType": {
+      "type": "enumeration",
+      "enum": ["YOUTUBE_LINK", "PDF", "EBOOK"],
+      "required": true
+    },
+    "url": { "type": "string", "required": true },
+    "fileName": { "type": "string" },
+    "fileSize": { "type": "integer" },
+    "accessInstructions": { "type": "text" },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "digitalAssets"
+    },
+    "purchases": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::digital-purchase.digital-purchase",
+      "mappedBy": "asset"
+    }
+  }
+}

@@ -1,8 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
-
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
@@ -16,15 +13,33 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-        if (!user) return null;
-        const ok = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!ok) return null;
+        const base = process.env.STRAPI_API_URL ?? process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://localhost:1337";
+        const res = await fetch(`${base.replace(/\/$/, "")}/api/auth/local`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identifier: credentials.email.toLowerCase().trim(),
+            password: credentials.password,
+          }),
+        });
+        const data = (await res.json()) as {
+          jwt?: string;
+          user?: {
+            id?: number;
+            documentId?: string;
+            email?: string;
+            username?: string;
+            appRole?: string;
+          };
+          error?: { message?: string };
+        };
+        if (!res.ok || !data.user) return null;
+        const u = data.user;
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+          id: String(u.documentId ?? u.id),
+          email: u.email ?? credentials.email,
+          name: u.username ?? u.email ?? "",
+          role: u.appRole ?? "USER",
         };
       },
     }),

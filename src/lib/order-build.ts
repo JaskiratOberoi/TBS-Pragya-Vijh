@@ -1,4 +1,4 @@
-import type { Product, ShippingClass } from "@prisma/client";
+import type { ProductLike, ShippingClassLike } from "@/lib/types/commerce";
 import { effectiveUnitPrice, buildPromoSummary, type CartLine } from "@/lib/promo-engine";
 import { computeShippingForPhysicalItems, cartHasPhysical } from "@/lib/shipping";
 import { aggregateOrderGst } from "@/lib/gst";
@@ -7,7 +7,7 @@ export type CartRow = {
   productId: string;
   quantity: number;
   variantSelection: unknown;
-  product: Product & { shippingClass: ShippingClass | null };
+  product: ProductLike & { shippingClass?: ShippingClassLike | null };
 };
 
 export function rowsToCartLines(rows: CartRow[]): CartLine[] {

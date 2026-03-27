@@ -1,0 +1,19 @@
+{
+  "kind": "collectionType",
+  "collectionName": "promo_rules",
+  "info": {
+    "singularName": "promo-rule",
+    "pluralName": "promo-rules",
+    "displayName": "Promo Rule"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": ["BUY_X_GET_Y", "FREE_GIFT_THRESHOLD"],
+      "required": true
+    },
+    "config": { "type": "json", "required": true },
+    "isActive": { "type": "boolean", "default": true }
+  }
+}

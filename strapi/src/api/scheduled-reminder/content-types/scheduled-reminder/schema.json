@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "scheduled_reminders",
+  "info": {
+    "singularName": "scheduled-reminder",
+    "pluralName": "scheduled-reminders",
+    "displayName": "Scheduled Reminder"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "reminderType": {
+      "type": "enumeration",
+      "enum": ["SESSION_REMINDER_24H", "SESSION_REMINDER_1H"],
+      "required": true
+    },
+    "scheduledFor": { "type": "datetime", "required": true },
+    "sent": { "type": "boolean", "default": false },
+    "sentAt": { "type": "datetime" },
+    "booking": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::booking.booking",
+      "inversedBy": "reminders"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "singleType",
+  "collectionName": "booking_setting",
+  "info": {
+    "singularName": "booking-setting",
+    "pluralName": "booking-settings",
+    "displayName": "Booking Settings"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "slotDurationMinutes": { "type": "integer", "default": 30 },
+    "bufferBetweenSlots": { "type": "integer", "default": 15 },
+    "maxAdvanceBookingDays": { "type": "integer", "default": 60 },
+    "minAdvanceBookingHours": { "type": "integer", "default": 2 },
+    "cancellationPolicyHours": { "type": "integer", "default": 24 },
+    "gcalCalendarId": { "type": "string" },
+    "gcalSyncEnabled": { "type": "boolean", "default": false },
+    "gcalRefreshToken": { "type": "text" },
+    "autoConfirm": { "type": "boolean", "default": true }
+  }
+}

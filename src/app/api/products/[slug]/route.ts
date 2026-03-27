@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { findProductBySlugFull } from "@/lib/strapi-queries";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: { category: true, shippingClass: true, variants: true, digitalAssets: true },
-  });
-  if (!product || !product.isActive) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const product = await findProductBySlugFull(slug);
+  if (!product || product.isActive === false) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const related = await prisma.product.findMany({
-    where: { isActive: true, categoryId: product.categoryId, NOT: { id: product.id } },
-    take: 8,
-    include: { category: true },
-  });
+  const productDocId = String(product.documentId ?? product.id ?? "");
+  const category = (product.category ?? {}) as { documentId?: string };
+  const catDocId = String(category.documentId ?? "");
+
+  const relatedJson = await strapiFetch<{ data?: unknown[] }>(
+    `/api/products?filters[isActive][$eq]=true&filters[category][documentId][$eq]=${encodeURIComponent(catDocId)}&filters[documentId][$ne]=${encodeURIComponent(productDocId)}&populate[category]=true&pagination[pageSize]=8`
+  );
+  const related = (relatedJson.data ?? []).map((x) => normalizeDoc(x));
 
   return NextResponse.json({ product, related });
 }

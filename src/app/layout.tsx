@@ -9,9 +9,13 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { CartMergeOnLogin } from "@/components/shared/CartMergeOnLogin";
 import { FbPixel } from "@/components/shared/FbPixel";
+import { getFacebookPixelIdForSite } from "@/lib/pixel-config";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const lora = Lora({ subsets: ["latin"], variable: "--font-serif" });
+
+/** Strapi is not available during `next build` in Docker; avoid static prerender that would fetch CMS. */
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { default: "The Blissful Soul — Healing Crystals & Sessions", template: "%s | The Blissful Soul" },
@@ -24,13 +28,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const fbPixelId = await getFacebookPixelIdForSite();
   return (
     <html lang="en" className={`${inter.variable} ${lora.variable}`}>
       <body className="min-h-screen bg-bento-canvas font-sans antialiased pb-16 md:pb-0">
         <Providers>
           <CartMergeOnLogin />
-          <FbPixel />
+          <FbPixel pixelId={fbPixelId} />
           <PromoBanner />
           <SiteChrome />
           <main className="min-h-[60vh]">{children}</main>

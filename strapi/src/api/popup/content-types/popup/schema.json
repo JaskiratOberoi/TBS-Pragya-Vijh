@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "popups",
+  "info": {
+    "singularName": "popup",
+    "pluralName": "popups",
+    "displayName": "Popup"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "content": { "type": "text", "required": true },
+    "imageUrl": { "type": "string" },
+    "linkUrl": { "type": "string" },
+    "triggerType": {
+      "type": "enumeration",
+      "enum": ["PAGE_LOAD", "EXIT_INTENT", "SCROLL_DEPTH", "TIMED"],
+      "required": true
+    },
+    "triggerValue": { "type": "integer" },
+    "showOnPages": { "type": "json" },
+    "frequency": {
+      "type": "enumeration",
+      "enum": ["ONCE", "SESSION", "ALWAYS"],
+      "default": "SESSION"
+    },
+    "startDate": { "type": "datetime" },
+    "endDate": { "type": "datetime" },
+    "isActive": { "type": "boolean", "default": true }
+  }
+}

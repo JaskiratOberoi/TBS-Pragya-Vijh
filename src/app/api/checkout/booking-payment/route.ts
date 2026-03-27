@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch } from "@/lib/strapi";
 import { createRzpOrder } from "@/lib/razorpay";
 
 function normEmail(s: string) {
@@ -20,11 +20,15 @@ export async function POST(req: Request) {
   };
   if (!body.serviceId || !body.scheduledAt) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
-  const service = await prisma.service.findUnique({ where: { id: body.serviceId } });
-  if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+  const svcRes = await strapiFetch<{ data?: unknown[] }>(
+    `/api/services?filters[documentId][$eq]=${encodeURIComponent(body.serviceId)}&pagination[pageSize]=1`
+  );
+  const svcRaw = svcRes.data?.[0];
+  if (!svcRaw) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+  const service = svcRaw as { documentId?: string; id?: string; price?: number; durationMinutes?: number };
 
   const scheduledAt = new Date(body.scheduledAt);
-  const endAt = new Date(scheduledAt.getTime() + service.durationMinutes * 60 * 1000);
+  const endAt = new Date(scheduledAt.getTime() + Number(service.durationMinutes ?? 0) * 60 * 1000);
 
   let userId: string | null = session?.user?.id ?? null;
   let guestName: string | null = null;
@@ -46,34 +50,53 @@ export async function POST(req: Request) {
     guestPhone = gp;
   }
 
-  const booking = await prisma.booking.create({
-    data: {
-      userId,
-      guestName,
-      guestEmail,
-      guestPhone,
-      serviceId: service.id,
-      scheduledAt,
-      endAt,
-      status: "PENDING",
-      paymentStatus: "PENDING",
-      amountPaid: service.price,
-      customerNotes: body.customerNotes,
-    },
-  });
+  const serviceDocId = String(service.documentId ?? body.serviceId);
+  const data: Record<string, unknown> = {
+    scheduledAt: scheduledAt.toISOString(),
+    endAt: endAt.toISOString(),
+    status: "PENDING",
+    paymentStatus: "PENDING",
+    amountPaid: Number(service.price ?? 0),
+    customerNotes: body.customerNotes ?? null,
+    guestName,
+    guestEmail,
+    guestPhone,
+    service: { connect: [serviceDocId] },
+  };
+  if (userId) data.user = { connect: [userId] };
+
+  let bookingDocId: string;
+  try {
+    const created = await strapiFetch<{ data?: { documentId?: string } }>(`/api/bookings`, {
+      method: "POST",
+      body: JSON.stringify({ data }),
+    });
+    bookingDocId = String(created.data?.documentId ?? "");
+    if (!bookingDocId) throw new Error("No booking id");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Booking create failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 
   try {
-    const rzp = await createRzpOrder(service.price, `BK-${booking.id}`, { bookingId: booking.id });
-    await prisma.booking.update({ where: { id: booking.id }, data: { rzpOrderId: rzp.id } });
+    const rzp = await createRzpOrder(Number(service.price ?? 0), `BK-${bookingDocId}`, { bookingId: bookingDocId });
+    await strapiFetch(`/api/bookings/${bookingDocId}`, {
+      method: "PUT",
+      body: JSON.stringify({ data: { rzpOrderId: rzp.id } }),
+    });
     return NextResponse.json({
-      bookingId: booking.id,
+      bookingId: bookingDocId,
       rzpOrderId: rzp.id,
       amount: service.price,
       key: process.env.RAZORPAY_KEY_ID,
       currency: "INR",
     });
   } catch (e) {
-    await prisma.booking.delete({ where: { id: booking.id } });
+    try {
+      await strapiFetch(`/api/bookings/${bookingDocId}`, { method: "DELETE" });
+    } catch {
+      /* ignore */
+    }
     const msg = e instanceof Error ? e.message : "Payment init failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

@@ -10,8 +10,10 @@ declare global {
   }
 }
 
-export function FbPixel() {
-  const id = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
+type Props = { pixelId?: string | null };
+
+export function FbPixel({ pixelId: pixelIdProp }: Props) {
+  const id = pixelIdProp ?? process.env.NEXT_PUBLIC_FB_PIXEL_ID ?? null;
   const pathname = usePathname();
 
   useEffect(() => {

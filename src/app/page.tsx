@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { toProductTileModel } from "@/lib/strapi-mappers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,16 +18,32 @@ import { BookNowButton } from "@/components/services/BookNowButton";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [hotProducts, services, testimonials] = await Promise.all([
-    prisma.product.findMany({
-      where: { isActive: true },
-      take: 4,
-      orderBy: { createdAt: "desc" },
-      include: { category: true },
-    }),
-    prisma.service.findMany({ where: { isActive: true }, orderBy: { price: "asc" } }),
-    prisma.testimonial.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+  const [pr, sr, tr] = await Promise.all([
+    strapiFetch<{ data?: unknown[] }>(
+      `/api/products?filters[isActive][$eq]=true&populate[category]=true&sort[0]=createdAt:desc&pagination[page]=1&pagination[pageSize]=4`,
+      { next: { revalidate: 60 } }
+    ),
+    strapiFetch<{ data?: unknown[] }>(
+      `/api/services?filters[isActive][$eq]=true&sort[0]=price:asc&pagination[pageSize]=100`,
+      { next: { revalidate: 60 } }
+    ),
+    strapiFetch<{ data?: unknown[] }>(
+      `/api/testimonials?filters[isActive][$eq]=true&sort[0]=sortOrder:asc&pagination[pageSize]=100`,
+      { next: { revalidate: 60 } }
+    ),
   ]);
+  const hotProducts = (pr.data ?? []).map((x) => toProductTileModel(normalizeDoc(x)));
+  const services = (sr.data ?? []).map((x) => normalizeDoc(x)) as Array<{
+    id: string;
+    name: string;
+    type: string;
+    price: number;
+    durationMinutes: number;
+  }>;
+  const testimonials = (tr.data ?? []).map((x) => {
+    const t = normalizeDoc(x);
+    return { id: String(t.id), name: String(t.name), text: String(t.text) };
+  });
 
   const topServices = services.filter((s) => s.name.includes("Tarot") || s.name.includes("All-in"));
   const audio = services.filter((s) => s.type === "AUDIO");
@@ -104,7 +121,11 @@ export default async function HomePage() {
         </div>
         <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {hotProducts.map((p) => (
-            <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
+            <ProductTile
+              key={p.id}
+              product={p}
+              unitPricePaise={effectiveUnitPrice({ price: p.price, salePrice: p.salePrice })}
+            />
           ))}
         </StaggerGrid>
       </section>
@@ -156,7 +177,11 @@ export default async function HomePage() {
         </div>
         <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
           {hotProducts.slice(0, 4).map((p) => (
-            <ProductTile key={`dup-${p.id}`} product={p} unitPricePaise={effectiveUnitPrice(p)} />
+            <ProductTile
+              key={`dup-${p.id}`}
+              product={p}
+              unitPricePaise={effectiveUnitPrice({ price: p.price, salePrice: p.salePrice })}
+            />
           ))}
         </StaggerGrid>
       </section>

@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "order_items",
+  "info": {
+    "singularName": "order-item",
+    "pluralName": "order-items",
+    "displayName": "Order Item"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "variantSelection": { "type": "json" },
+    "quantity": { "type": "integer", "required": true },
+    "unitPrice": { "type": "integer", "required": true },
+    "gstRateBps": { "type": "integer", "default": 1800 },
+    "hsnCode": { "type": "string" },
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "items"
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "orderItems"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "blissful-strapi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Strapi 5 CMS for The Blissful Soul",
+  "scripts": {
+    "build": "strapi build",
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "strapi": "strapi",
+    "migrate:prisma": "tsx scripts/migrate-from-prisma.ts"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "^4.1.6",
+    "@strapi/plugin-users-permissions": "5.40.0",
+    "@strapi/strapi": "5.40.0",
+    "bcryptjs": "^2.4.3",
+    "nodemailer": "^6.9.16",
+    "pg": "^8.13.1",
+    "razorpay": "^2.9.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "styled-components": "^6.1.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0 <=22.x.x",
+    "npm": ">=6.0.0"
+  },
+  "strapi": {
+    "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  }
+}

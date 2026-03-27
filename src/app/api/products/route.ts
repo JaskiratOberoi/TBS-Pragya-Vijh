@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -11,38 +10,34 @@ export async function GET(req: Request) {
   const type = searchParams.get("type") as "PHYSICAL" | "DIGITAL" | null;
   const sort = searchParams.get("sort") ?? "latest";
 
-  const where: Prisma.ProductWhereInput = { isActive: true };
+  const parts: string[] = ["filters[isActive][$eq]=true", "populate[category]=true"];
   if (q) {
-    where.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { description: { contains: q, mode: "insensitive" } },
-    ];
+    parts.push(`filters[$or][0][name][$containsi]=${encodeURIComponent(q)}`);
+    parts.push(`filters[$or][1][description][$containsi]=${encodeURIComponent(q)}`);
   }
   if (category) {
-    where.category = { slug: category };
+    parts.push(`filters[category][slug][$eq]=${encodeURIComponent(category)}`);
   }
   if (type === "PHYSICAL" || type === "DIGITAL") {
-    where.productType = type;
+    parts.push(`filters[productType][$eq]=${type}`);
   }
 
-  let orderBy: Prisma.ProductOrderByWithRelationInput[] = [{ createdAt: "desc" }];
-  if (sort === "price_asc") orderBy = [{ price: "asc" }];
-  if (sort === "price_desc") orderBy = [{ price: "desc" }];
-  if (sort === "name") orderBy = [{ name: "asc" }];
+  let sortParam = "sort[0]=createdAt:desc";
+  if (sort === "price_asc") sortParam = "sort[0]=price:asc";
+  if (sort === "price_desc") sortParam = "sort[0]=price:desc";
+  if (sort === "name") sortParam = "sort[0]=name:asc";
 
-  const [total, products] = await Promise.all([
-    prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      orderBy: orderBy[0],
-      skip: (page - 1) * limit,
-      take: limit,
-      include: { category: true },
-    }),
-  ]);
+  const pagination = `pagination[page]=${page}&pagination[pageSize]=${limit}`;
+  const qs = [...parts, sortParam, pagination, "pagination[withCount]=true"].join("&");
 
-  return NextResponse.json({
-    products: products.map((p) => ({
+  const json = await strapiFetch<{ data?: unknown[]; meta?: { pagination?: { total?: number; pageCount?: number } } }>(
+    `/api/products?${qs}`
+  );
+  const raw = json.data ?? [];
+  const products = raw.map((r) => {
+    const p = normalizeDoc(r);
+    const cat = p.category as Record<string, unknown> | undefined;
+    return {
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -51,11 +46,23 @@ export async function GET(req: Request) {
       images: p.images,
       productType: p.productType,
       stock: p.stock,
-      category: p.category,
-    })),
+      category: cat
+        ? {
+            name: cat.name,
+            slug: cat.slug,
+          }
+        : null,
+    };
+  });
+
+  const total = json.meta?.pagination?.total ?? products.length;
+  const totalPages = json.meta?.pagination?.pageCount ?? Math.max(1, Math.ceil(total / limit));
+
+  return NextResponse.json({
+    products,
     total,
     page,
     limit,
-    totalPages: Math.ceil(total / limit),
+    totalPages,
   });
 }

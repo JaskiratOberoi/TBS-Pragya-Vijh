@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { findLegalPageBySlug } from "@/lib/strapi-queries";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Terms and Conditions" };
 
 export default async function TermsPage() {
-  const page = await prisma.legalPage.findUnique({ where: { slug: "terms" } });
+  const page = await findLegalPageBySlug("terms");
   return (
     <article
       className="mx-auto max-w-3xl px-4 py-10 text-sm leading-relaxed text-muted-foreground [&_h1]:text-foreground [&_p]:mt-3"

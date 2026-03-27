@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "order_shipments",
+  "info": {
+    "singularName": "order-shipment",
+    "pluralName": "order-shipments",
+    "displayName": "Order Shipment"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "courierName": { "type": "string" },
+    "trackingNumber": { "type": "string" },
+    "trackingUrl": { "type": "string" },
+    "shippedAt": { "type": "datetime" },
+    "deliveredAt": { "type": "datetime" },
+    "notes": { "type": "text" },
+    "order": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::order.order",
+      "inversedBy": "shipment"
+    }
+  }
+}

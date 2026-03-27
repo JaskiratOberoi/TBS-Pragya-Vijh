@@ -1,0 +1,83 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "Order"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "guestName": { "type": "string" },
+    "guestEmail": { "type": "email" },
+    "guestPhone": { "type": "string" },
+    "status": {
+      "type": "enumeration",
+      "enum": ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"],
+      "default": "PENDING"
+    },
+    "subtotal": { "type": "integer", "required": true },
+    "discount": { "type": "integer", "default": 0 },
+    "tax": { "type": "integer", "default": 0 },
+    "shippingAmount": { "type": "integer", "default": 0 },
+    "total": { "type": "integer", "required": true },
+    "rzpOrderId": { "type": "string" },
+    "rzpPaymentId": { "type": "string" },
+    "rzpSignature": { "type": "text" },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": ["PENDING", "PAID", "FAILED", "REFUNDED"],
+      "default": "PENDING"
+    },
+    "paymentMethod": { "type": "string" },
+    "refundId": { "type": "string" },
+    "refundStatus": { "type": "string" },
+    "refundAmount": { "type": "integer" },
+    "shippingAddress": { "type": "json" },
+    "billingAddress": { "type": "json" },
+    "notes": { "type": "text" },
+    "legacyId": { "type": "string" },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "orders"
+    },
+    "coupon": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::coupon-code.coupon-code",
+      "inversedBy": "orders"
+    },
+    "items": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-item.order-item",
+      "mappedBy": "order"
+    },
+    "invoice": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::invoice.invoice",
+      "mappedBy": "order"
+    },
+    "shipment": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::order-shipment.order-shipment",
+      "mappedBy": "order"
+    },
+    "digitalPurchases": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::digital-purchase.digital-purchase",
+      "mappedBy": "order"
+    },
+    "couponUsages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::coupon-usage.coupon-usage",
+      "mappedBy": "order"
+    }
+  }
+}

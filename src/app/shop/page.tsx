@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { toProductTileModel } from "@/lib/strapi-mappers";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 import { Button } from "@/components/ui/button";
 import { StaggerGrid } from "@/components/motion/StaggerGrid";
@@ -18,37 +19,40 @@ export default async function ShopPage({
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1"));
   const limit = 12;
-  const where = {
-    isActive: true,
-    ...(sp.category ? { category: { slug: sp.category } } : {}),
-    ...(sp.type === "PHYSICAL" || sp.type === "DIGITAL" ? { productType: sp.type as "PHYSICAL" | "DIGITAL" } : {}),
-    ...(sp.q
-      ? {
-          OR: [
-            { name: { contains: sp.q, mode: "insensitive" as const } },
-            { description: { contains: sp.q, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
-  };
-  let orderBy: { createdAt?: "desc"; price?: "asc" | "desc"; name?: "asc" } = { createdAt: "desc" };
-  if (sp.sort === "price_asc") orderBy = { price: "asc" };
-  if (sp.sort === "price_desc") orderBy = { price: "desc" };
-  if (sp.sort === "name") orderBy = { name: "asc" };
 
-  const [total, products, categories] = await Promise.all([
-    prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-      include: { category: true },
+  const parts: string[] = ["filters[isActive][$eq]=true", "populate[category]=true"];
+  if (sp.q) {
+    parts.push(`filters[$or][0][name][$containsi]=${encodeURIComponent(sp.q)}`);
+    parts.push(`filters[$or][1][description][$containsi]=${encodeURIComponent(sp.q)}`);
+  }
+  if (sp.category) {
+    parts.push(`filters[category][slug][$eq]=${encodeURIComponent(sp.category)}`);
+  }
+  if (sp.type === "PHYSICAL" || sp.type === "DIGITAL") {
+    parts.push(`filters[productType][$eq]=${sp.type}`);
+  }
+  let sortParam = "sort[0]=createdAt:desc";
+  if (sp.sort === "price_asc") sortParam = "sort[0]=price:asc";
+  if (sp.sort === "price_desc") sortParam = "sort[0]=price:desc";
+  if (sp.sort === "name") sortParam = "sort[0]=name:asc";
+  const pagination = `pagination[page]=${page}&pagination[pageSize]=${limit}`;
+  const qs = [...parts, sortParam, pagination, "pagination[withCount]=true"].join("&");
+
+  const [productsJson, catJson] = await Promise.all([
+    strapiFetch<{ data?: unknown[]; meta?: { pagination?: { total?: number; pageCount?: number } } }>(
+      `/api/products?${qs}`,
+      { next: { revalidate: 60 } }
+    ),
+    strapiFetch<{ data?: unknown[] }>(`/api/product-categories?sort[0]=sortOrder:asc&pagination[pageSize]=100`, {
+      next: { revalidate: 60 },
     }),
-    prisma.productCategory.findMany({ orderBy: { sortOrder: "asc" } }),
   ]);
 
-  const totalPages = Math.ceil(total / limit);
+  const rawProducts = productsJson.data ?? [];
+  const products = rawProducts.map((x) => toProductTileModel(normalizeDoc(x)));
+  const categories = (catJson.data ?? []).map((x) => normalizeDoc(x)) as Array<{ id: string; name: string; slug: string }>;
+  const total = productsJson.meta?.pagination?.total ?? rawProducts.length;
+  const totalPages = productsJson.meta?.pagination?.pageCount ?? Math.max(1, Math.ceil(total / limit));
   const baseQs = () => {
     const qs = new URLSearchParams();
     if (sp.category) qs.set("category", sp.category);
@@ -177,7 +181,11 @@ export default async function ShopPage({
         </div>
         <StaggerGrid className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {products.map((p) => (
-            <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
+            <ProductTile
+              key={p.id}
+              product={p}
+              unitPricePaise={effectiveUnitPrice({ price: p.price, salePrice: p.salePrice })}
+            />
           ))}
         </StaggerGrid>
         <div className="mt-12 flex justify-center gap-2">

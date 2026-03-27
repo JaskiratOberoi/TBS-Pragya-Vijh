@@ -1,7 +1,7 @@
-import type { Product, ShippingClass } from "@prisma/client";
+import type { ProductLike, ShippingClassLike } from "@/lib/types/commerce";
 
 export function computeShippingForPhysicalItems(
-  items: { product: Product & { shippingClass: ShippingClass | null }; quantity: number }[],
+  items: { product: ProductLike & { shippingClass?: ShippingClassLike | null }; quantity: number }[],
   subtotalPaiseAfterDiscounts: number
 ): number {
   let maxFee = 0;
