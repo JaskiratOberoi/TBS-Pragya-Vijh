@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ProductForm, productToFormInitial } from "@/components/admin/ProductForm";
+import { productToFormInitial } from "@/lib/product-form-initial";
+import { ProductForm } from "@/components/admin/ProductForm";
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

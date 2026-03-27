@@ -8,25 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-
-export type ProductFormInitial = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  categoryId: string;
-  productType: "PHYSICAL" | "DIGITAL";
-  priceRupees: number;
-  salePriceRupees: number | null;
-  stock: number;
-  images: string[];
-  healingProperties: string | null;
-  wearHand: string | null;
-  shippingClassId: string | null;
-  hsnCode: string | null;
-  gstRateBps: number;
-  isActive: boolean;
-};
+import type { ProductFormInitial } from "@/lib/product-form-initial";
 
 type Props = {
   categories: { id: string; name: string }[];
@@ -262,46 +244,4 @@ export function ProductForm({ categories, shippingClasses, initial }: Props) {
       </div>
     </form>
   );
-}
-
-function paiseToRupees(paise: number) {
-  return Math.round(paise / 100);
-}
-
-export function productToFormInitial(p: {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  categoryId: string;
-  productType: "PHYSICAL" | "DIGITAL";
-  price: number;
-  salePrice: number | null;
-  stock: number;
-  images: string[];
-  healingProperties: string | null;
-  wearHand: string | null;
-  shippingClassId: string | null;
-  hsnCode: string | null;
-  gstRateBps: number;
-  isActive: boolean;
-}): ProductFormInitial {
-  return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    categoryId: p.categoryId,
-    productType: p.productType,
-    priceRupees: paiseToRupees(p.price),
-    salePriceRupees: p.salePrice != null ? paiseToRupees(p.salePrice) : null,
-    stock: p.stock,
-    images: p.images,
-    healingProperties: p.healingProperties,
-    wearHand: p.wearHand,
-    shippingClassId: p.shippingClassId,
-    hsnCode: p.hsnCode,
-    gstRateBps: p.gstRateBps,
-    isActive: p.isActive,
-  };
 }
