@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/utils";
+import { BookNowButton } from "@/components/services/BookNowButton";
 
 export default async function ServicesPage() {
   const services = await prisma.service.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
@@ -61,9 +60,7 @@ function ServiceCard({ s }: { s: { id: string; name: string; type: string; price
         </div>
         <p className="text-sm text-muted-foreground">{s.durationMinutes} min</p>
         <p className="text-xl font-bold text-primary">{formatINR(s.price)}</p>
-        <Button className="w-full" asChild>
-          <Link href={`/book/${s.id}`}>Book now</Link>
-        </Button>
+        <BookNowButton serviceId={s.id} />
       </CardContent>
     </Card>
   );

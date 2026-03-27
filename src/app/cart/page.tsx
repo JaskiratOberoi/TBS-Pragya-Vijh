@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/utils";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 type Line = {
   id: string;
@@ -26,7 +27,7 @@ export default function CartPage() {
     load();
   }, [load]);
 
-  if (!data) return <div className="p-10 text-center text-muted-foreground">Loading cart…</div>;
+  if (!data) return <LoadingScreen label="Loading cart" />;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatINR } from "@/lib/utils";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 function AccountInner() {
   const { data: session, status } = useSession();
@@ -41,7 +42,7 @@ function AccountInner() {
       .then((d) => setDigital(d.items ?? []));
   }, [status]);
 
-  if (status === "loading") return <div className="p-10 text-center">Loading…</div>;
+  if (status === "loading") return <LoadingScreen label="Loading account" />;
 
   if (status === "unauthenticated") {
     return (
@@ -206,7 +207,7 @@ function AccountInner() {
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center">Loading…</div>}>
+    <Suspense fallback={<LoadingScreen label="Loading account" />}>
       <AccountInner />
     </Suspense>
   );

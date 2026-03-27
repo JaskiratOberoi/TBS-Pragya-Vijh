@@ -8,8 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { formatINR } from "@/lib/utils";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
+import { HomeBentoReveal } from "@/components/home/HomeBentoReveal";
 import { KpiCounters } from "@/components/home/KpiCounters";
+import { StaggerGrid } from "@/components/motion/StaggerGrid";
 import { ProductTile } from "@/components/shop/ProductTile";
+import { BookNowButton } from "@/components/services/BookNowButton";
 
 export const revalidate = 60;
 
@@ -40,7 +43,7 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <section className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <HomeBentoReveal>
         <div className="grid auto-rows-fr gap-4 md:grid-cols-12 md:gap-5">
           <div className="relative flex flex-col justify-between overflow-hidden rounded-4xl bg-gradient-to-br from-bento-mint via-card to-bento-cream p-8 shadow-bento md:col-span-7 md:row-span-2 md:min-h-[320px]">
             <div>
@@ -87,7 +90,7 @@ export default async function HomePage() {
             </span>
           </Link>
         </div>
-      </section>
+      </HomeBentoReveal>
 
       <section className="mx-auto max-w-7xl px-4 py-10">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -99,11 +102,11 @@ export default async function HomePage() {
             <Link href="/shop">See all</Link>
           </Button>
         </div>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {hotProducts.map((p) => (
             <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
           ))}
-        </div>
+        </StaggerGrid>
       </section>
 
       <section className="bg-bento-mint/50 py-14">
@@ -151,11 +154,11 @@ export default async function HomePage() {
             <Link href="/shop">See all</Link>
           </Button>
         </div>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
+        <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
           {hotProducts.slice(0, 4).map((p) => (
             <ProductTile key={`dup-${p.id}`} product={p} unitPricePaise={effectiveUnitPrice(p)} />
           ))}
-        </div>
+        </StaggerGrid>
       </section>
 
       <section className="bg-bento-cream/60 py-14">
@@ -201,9 +204,7 @@ function ServiceCard({ s }: { s: { id: string; name: string; type: string; price
         </div>
         <p className="text-sm text-muted-foreground">{s.durationMinutes} min</p>
         <p className="text-lg font-semibold text-primary">{formatINR(s.price)}</p>
-        <Button className="w-full rounded-full" asChild>
-          <Link href={`/book/${s.id}`}>Book now</Link>
-        </Button>
+        <BookNowButton serviceId={s.id} className="rounded-full" />
       </CardContent>
     </Card>
   );

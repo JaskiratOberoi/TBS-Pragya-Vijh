@@ -8,13 +8,13 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ items: [] });
   const items = await prisma.digitalPurchase.findMany({
     where: { userId: session.user.id },
-    include: { asset: true, product: true },
+    include: { asset: { include: { product: true } } },
     orderBy: { accessGrantedAt: "desc" },
   });
   return NextResponse.json({
     items: items.map((i) => ({
       id: i.id,
-      productName: i.product.name,
+      productName: i.asset.product.name,
       assetType: i.asset.assetType,
       url: i.accessUrl ?? i.asset.url,
       instructions: i.asset.accessInstructions,

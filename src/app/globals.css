@@ -8,7 +8,8 @@
     --foreground: 225 25% 12%;
     --card: 0 0% 100%;
     --card-foreground: 225 25% 12%;
-    --primary: 226 100% 58%;
+    /* Indigo accent #4B0082 */
+    --primary: 275 100% 25.5%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 18% 93%;
     --secondary-foreground: 225 20% 22%;
@@ -20,7 +21,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 220 16% 90%;
     --input: 220 16% 90%;
-    --ring: 226 100% 58%;
+    --ring: 275 100% 25.5%;
     --radius: 1.25rem;
     /* Bento-style section surfaces */
     --bento-mint: 158 42% 94%;

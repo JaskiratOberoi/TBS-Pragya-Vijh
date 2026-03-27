@@ -1,7 +1,5 @@
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
+
 export default function Loading() {
-  return (
-    <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground" role="status" aria-live="polite">
-      Loading…
-    </div>
-  );
+  return <LoadingScreen />;
 }

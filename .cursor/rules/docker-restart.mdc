@@ -1,24 +1,49 @@
 ---
-description: Restart blissful-soul Docker dev stack after config or dependency changes
+description: Restart blissful-soul Docker dev stack after code, UI, config, or dependency changes
 globs:
+  - blissful-soul/src/**
+  - blissful-soul/prisma/**
+  - blissful-soul/public/**
   - blissful-soul/next.config.*
   - blissful-soul/.env*
   - blissful-soul/docker-compose*.yml
   - blissful-soul/Dockerfile*
-  - blissful-soul/prisma/seed.ts
-  - blissful-soul/prisma/schema.prisma
+  - blissful-soul/package.json
+  - blissful-soul/tailwind.config.*
+  - blissful-soul/postcss.config.*
+  # When the workspace root is the repo itself (not the parent folder):
+  - src/**
+  - prisma/**
+  - public/**
+  - next.config.*
+  - tailwind.config.*
+  - postcss.config.*
 ---
 
-After editing Next config, env files, Docker Compose, Prisma schema/seed, or anything that affects the running app or DB container, restart the dev containers so changes apply:
+The dev app runs in Docker (`app` service) with the repo bind-mounted. **Still restart containers** after edits so the Next.js process reloads cleanly (especially `globals.css`, `tailwind.config`, env, Prisma, Dockerfiles, or `package.json`).
+
+**At the end of a coding session** that touches this project, if the user runs the stack via Docker, **run a restart** unless they said not to:
 
 ```powershell
 Set-Location "e:\Projects\New folder\blissful-soul"; .\restart-dev-docker.ps1
 ```
 
-Or run:
+Or from the project directory (any shell with Docker):
+
+```bash
+npm run docker:restart
+```
+
+Or:
 
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml restart db app
+```
+
+After **`package.json` / lockfile / Dockerfile** changes, a **rebuild** may be needed instead of only restart:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d db app
 ```
 
 Do this automatically after such edits unless the user explicitly asks not to.

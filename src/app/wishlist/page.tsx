@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/utils";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 
 type Item = { id: string; product: { id: string; name: string; slug: string; price: number; salePrice: number | null; images: string[] } };
@@ -21,7 +22,7 @@ export default function WishlistPage() {
       .then((d) => setItems(d.items ?? []));
   }, [status]);
 
-  if (status === "loading") return <div className="p-10 text-center">Loading…</div>;
+  if (status === "loading") return <LoadingScreen label="Loading wishlist" />;
   if (status === "unauthenticated") {
     return (
       <div className="mx-auto max-w-md px-4 py-12 text-center">

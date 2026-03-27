@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { ProductDetailTabs } from "@/components/shop/ProductDetailTabs";
+import { StaggerGrid } from "@/components/motion/StaggerGrid";
 import { ProductTile } from "@/components/shop/ProductTile";
 import type { Metadata } from "next";
 
@@ -124,11 +125,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {related.length > 0 && (
         <section className="mt-20">
           <h2 className="font-serif text-xl font-bold text-foreground md:text-2xl">Related products</h2>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
+          <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
             {related.map((p) => (
               <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
             ))}
-          </div>
+          </StaggerGrid>
         </section>
       )}
     </div>

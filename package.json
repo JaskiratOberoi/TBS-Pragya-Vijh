@@ -12,7 +12,8 @@
     "db:seed": "prisma db seed",
     "sync-media": "node scripts/sync-media-from-live.mjs",
     "sync-product-images": "node scripts/sync-product-image-urls-from-wp.mjs",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "docker:restart": "docker compose -f docker-compose.yml -f docker-compose.dev.yml restart db app"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -31,6 +32,7 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^11.18.2",
     "googleapis": "^144.0.0",
     "ics": "^3.8.1",
     "json2csv": "^6.0.0-alpha.2",

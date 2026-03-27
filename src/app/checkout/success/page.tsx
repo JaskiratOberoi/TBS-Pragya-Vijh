@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState, Suspense } from "react";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,7 +75,7 @@ function SuccessInner() {
 
 export default function CheckoutSuccessPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center">Loading…</div>}>
+    <Suspense fallback={<LoadingScreen label="Loading order" />}>
       <SuccessInner />
     </Suspense>
   );

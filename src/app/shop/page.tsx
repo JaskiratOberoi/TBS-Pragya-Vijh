@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 import { Button } from "@/components/ui/button";
+import { StaggerGrid } from "@/components/motion/StaggerGrid";
 import { ProductTile } from "@/components/shop/ProductTile";
 import type { Metadata } from "next";
 
@@ -174,11 +175,11 @@ export default async function ShopPage({
             </Button>
           ))}
         </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <StaggerGrid className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {products.map((p) => (
             <ProductTile key={p.id} product={p} unitPricePaise={effectiveUnitPrice(p)} />
           ))}
-        </div>
+        </StaggerGrid>
         <div className="mt-12 flex justify-center gap-2">
           {page > 1 && (
             <Button variant="outline" className="rounded-full" asChild>

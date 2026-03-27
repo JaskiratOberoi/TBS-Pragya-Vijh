@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,7 @@ function Form() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center">Loading…</div>}>
+    <Suspense fallback={<LoadingScreen label="Loading" />}>
       <Form />
     </Suspense>
   );

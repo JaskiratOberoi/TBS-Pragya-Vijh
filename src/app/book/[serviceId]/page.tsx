@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { formatINR } from "@/lib/utils";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 
 declare global {
   interface Window {
@@ -134,7 +135,7 @@ export default function BookPage() {
     })();
   }
 
-  if (status === "loading" || !service) return <div className="p-10 text-center">Loading…</div>;
+  if (status === "loading" || !service) return <LoadingScreen label="Loading booking" />;
 
   return (
     <>

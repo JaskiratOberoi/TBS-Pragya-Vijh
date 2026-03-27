@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatINR } from "@/lib/utils";
+import { LoadingScreen } from "@/components/shared/LoadingSpinner";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 
 declare global {
@@ -141,7 +142,7 @@ export default function CheckoutPage() {
     })();
   }
 
-  if (status === "loading" || !cart) return <div className="p-10 text-center">Loading…</div>;
+  if (status === "loading" || !cart) return <LoadingScreen label="Loading checkout" />;
 
   return (
     <>

@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatINR } from "@/lib/utils";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { cn } from "@/lib/utils";
+
+const MotionCard = motion(Card);
 
 export type ProductTileModel = {
   id: string;
@@ -30,19 +35,22 @@ export function ProductTile({ product, unitPricePaise, className }: Props) {
   const img = product.images[0] ?? "/assets/products/placeholder.svg";
 
   return (
-    <Card
+    <MotionCard
       className={cn(
         "group overflow-hidden rounded-3xl border-0 bg-card shadow-bento transition-shadow hover:shadow-bento-sm",
         className
       )}
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
     >
       <div className="relative aspect-square overflow-hidden rounded-t-3xl bg-muted">
-        <Link href={`/shop/${product.slug}`} className="absolute inset-0 z-0 block">
+        <Link href={`/shop/${product.slug}`} className="absolute inset-0 z-0 block overflow-hidden">
           <Image
             src={img}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
         </Link>
@@ -78,6 +86,6 @@ export function ProductTile({ product, unitPricePaise, className }: Props) {
           <p className="text-sm text-muted-foreground line-through">{formatINR(product.price)}</p>
         )}
       </CardContent>
-    </Card>
+    </MotionCard>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { ShoppingBag, Heart, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -12,6 +13,9 @@ import { formatINR } from "@/lib/utils";
 import { signIn } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+
+const MotionLink = motion(Link);
+const MotionButton = motion(Button);
 
 const nav = [
   { href: "/", label: "Home" },
@@ -74,29 +78,43 @@ export function SiteChrome() {
           <Link href="/" className="shrink-0 font-serif text-lg font-semibold text-primary md:text-xl">
             The Blissful Soul
           </Link>
-          <nav className="hidden items-center gap-1 rounded-full border border-border/80 bg-card/80 p-1 shadow-sm md:flex">
+          <nav className="relative hidden items-center gap-1 rounded-full border border-border/80 bg-card/80 p-1 shadow-sm md:flex">
             {nav.map((item) => {
               const active = navActive(pathname, item.href);
               return (
-                <Link
+                <MotionLink
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-full px-3 py-2 text-sm font-medium transition-colors",
-                    active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    "relative inline-flex rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                    active ? "z-10 text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  {item.label}
-                </Link>
+                  {active && (
+                    <motion.span
+                      layoutId="navActivePill"
+                      className="absolute inset-0 -z-10 rounded-full bg-primary shadow-sm"
+                      transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                    />
+                  )}
+                  <span className="relative">{item.label}</span>
+                </MotionLink>
               );
             })}
           </nav>
           <div className="flex items-center gap-0.5">
             <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Search">
+                <MotionButton
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  aria-label="Search"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.94 }}
+                >
                   <Search className="h-5 w-5" />
-                </Button>
+                </MotionButton>
               </SheetTrigger>
               <SheetContent side="top" className="h-auto max-h-[80vh]">
                 <SheetHeader>
@@ -129,21 +147,28 @@ export function SiteChrome() {
             </Sheet>
 
             <Button variant="ghost" size="icon" className="rounded-full" asChild>
-              <Link href="/wishlist" aria-label="Wishlist">
+              <MotionLink href="/wishlist" aria-label="Wishlist" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.94 }}>
                 <Heart className="h-5 w-5" />
-              </Link>
+              </MotionLink>
             </Button>
 
             <Sheet open={cartOpen} onOpenChange={setCartOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative rounded-full" aria-label="Cart">
+                <MotionButton
+                  variant="ghost"
+                  size="icon"
+                  className="relative rounded-full"
+                  aria-label="Cart"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.94 }}
+                >
                   <ShoppingBag className="h-5 w-5" />
                   {itemCount > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
                       {itemCount}
                     </span>
                   )}
-                </Button>
+                </MotionButton>
               </SheetTrigger>
               <SheetContent className="rounded-l-3xl">
                 <SheetHeader>
@@ -180,9 +205,16 @@ export function SiteChrome() {
 
             <Sheet open={authOpen} onOpenChange={setAuthOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
+                <MotionButton
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  aria-label="Account"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.94 }}
+                >
                   <User className="h-5 w-5" />
-                </Button>
+                </MotionButton>
               </SheetTrigger>
               <SheetContent className="rounded-l-3xl">
                 <SheetHeader>
