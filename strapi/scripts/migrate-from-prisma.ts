@@ -1,13 +1,11 @@
 /**
- * Outline migration: read rows from the legacy Prisma PostgreSQL database and POST to Strapi REST.
+ * Legacy outline (categories-only) — kept for reference.
  *
- * Prerequisites:
- * - Strapi running with all content-types created and API token with create permissions
- * - Set LEGACY_DATABASE_URL and STRAPI_URL / STRAPI_API_TOKEN in env
+ * **Catalog import (products, services, categories, shipping, variants)** runs automatically
+ * in Strapi bootstrap when `IMPORT_LEGACY_CATALOG=true` and `LEGACY_DATABASE_URL` is set
+ * (see `src/bootstrap/migrate-legacy-catalog.ts` and `docker-compose.yml`).
  *
- * Run: npx tsx scripts/migrate-from-prisma.ts
- *
- * This script is intentionally minimal — extend per-table mappers for production use.
+ * To re-import after clearing Strapi products, set `IMPORT_LEGACY_FORCE=true` once.
  */
 import pg from "pg";
 

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { strapiFetch, normalizeDoc, unwrapList } from "@/lib/strapi";
+import { strapiFetchPublicList, normalizeDoc, unwrapList } from "@/lib/strapi";
 import { findProductBySlug, findProductBySlugFull } from "@/lib/strapi-queries";
 import { toProductTileModel } from "@/lib/strapi-mappers";
 import { formatINR } from "@/lib/utils";
@@ -35,11 +35,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const catDocId = String(category.documentId ?? "");
 
   const [relatedJson, reviewsJson] = await Promise.all([
-    strapiFetch<{ data?: unknown[] }>(
+    strapiFetchPublicList<{ data?: unknown[] }>(
       `/api/products?filters[isActive][$eq]=true&filters[category][documentId][$eq]=${encodeURIComponent(catDocId)}&filters[documentId][$ne]=${encodeURIComponent(productDocId)}&pagination[pageSize]=8`,
       { next: { revalidate: 60 } }
     ),
-    strapiFetch<{ data?: unknown[] }>(
+    strapiFetchPublicList<{ data?: unknown[] }>(
       `/api/reviews?filters[product][documentId][$eq]=${encodeURIComponent(productDocId)}&populate[user]=true&sort[0]=createdAt:desc&pagination[pageSize]=20`,
       { next: { revalidate: 60 } }
     ),

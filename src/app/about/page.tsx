@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 
 export default async function AboutPage() {
-  const j = await strapiFetch<{ data?: unknown[] }>(
+  const j = await strapiFetchPublicList<{ data?: unknown[] }>(
     `/api/testimonials?filters[isActive][$eq]=true&sort[0]=sortOrder:asc&pagination[pageSize]=100`,
     { next: { revalidate: 60 } }
   );

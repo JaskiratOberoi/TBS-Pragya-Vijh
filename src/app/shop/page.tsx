@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
 import { toProductTileModel } from "@/lib/strapi-mappers";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,11 @@ export default async function ShopPage({
   const qs = [...parts, sortParam, pagination, "pagination[withCount]=true"].join("&");
 
   const [productsJson, catJson] = await Promise.all([
-    strapiFetch<{ data?: unknown[]; meta?: { pagination?: { total?: number; pageCount?: number } } }>(
+    strapiFetchPublicList<{ data?: unknown[]; meta?: { pagination?: { total?: number; pageCount?: number } } }>(
       `/api/products?${qs}`,
       { next: { revalidate: 60 } }
     ),
-    strapiFetch<{ data?: unknown[] }>(`/api/product-categories?sort[0]=sortOrder:asc&pagination[pageSize]=100`, {
+    strapiFetchPublicList<{ data?: unknown[] }>(`/api/product-categories?sort[0]=sortOrder:asc&pagination[pageSize]=100`, {
       next: { revalidate: 60 },
     }),
   ]);

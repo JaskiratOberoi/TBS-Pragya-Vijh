@@ -12,6 +12,10 @@ ENV NODE_ENV=production
 RUN npm run build
 # TS projects load config from distDir/config (see @strapi/strapi start.js + loadConfiguration)
 RUN cp -r config dist/config
+# Strapi loads APIs only from distDir/src/api; loaders read .js + .json (not .ts). Emit server TS + copy schemas.
+RUN npx tsc -p tsconfig.build.json
+RUN find src -name '*.json' | while read -r f; do rel="${f#src/}"; mkdir -p "dist/src/$(dirname "$rel")"; cp "$f" "dist/src/$rel"; done
+RUN find src -path '*/routes/*.js' | while read -r f; do rel="${f#src/}"; mkdir -p "dist/src/$(dirname "$rel")"; cp "$f" "dist/src/$rel"; done
 
 FROM node:20-alpine AS runner
 WORKDIR /opt/app

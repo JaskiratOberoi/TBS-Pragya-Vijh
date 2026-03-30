@@ -14,18 +14,78 @@ export function strapiUrl(path: string) {
   return `${STRAPI.replace(/\/$/, "")}${p}`;
 }
 
-export async function strapiFetch<T = unknown>(
-  path: string,
-  init: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {}
-): Promise<T> {
-  const headers = new Headers(init.headers);
+type StrapiNext = { revalidate?: number | false; tags?: string[] };
+
+function strapiHeaders(init?: RequestInit) {
+  const headers = new Headers(init?.headers);
   headers.set("Content-Type", headers.get("Content-Type") ?? "application/json");
   if (TOKEN) headers.set("Authorization", `Bearer ${TOKEN}`);
+  return headers;
+}
 
+async function strapiRequest(
+  path: string,
+  init: RequestInit & { next?: StrapiNext } = {}
+): Promise<Response> {
+  const { next, ...rest } = init;
+  return fetch(strapiUrl(path), {
+    ...rest,
+    headers: strapiHeaders(init),
+    ...(next !== undefined ? { next } : { cache: "no-store" }),
+  });
+}
+
+/** Raw GET response (e.g. fail-closed when 403 must not be treated as empty data). */
+export async function strapiGetResponse(
+  path: string,
+  init: Omit<RequestInit, "method"> & { next?: StrapiNext } = {}
+): Promise<Response> {
+  return strapiRequest(path, { ...init, method: "GET" });
+}
+
+/**
+ * GET list for storefront/SSR: empty list when Strapi returns 403 (no public permission) or 404.
+ * Avoids white-screen when CMS is new or permissions are not configured yet.
+ */
+export async function strapiFetchPublicList<T extends { data?: unknown[] }>(
+  path: string,
+  init: Omit<RequestInit, "method"> & { next?: StrapiNext } = {}
+): Promise<T> {
+  const res = await strapiRequest(path, { ...init, method: "GET" });
+  if (res.status === 404 || res.status === 403) return { data: [] } as unknown as T;
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`Strapi ${res.status}: ${t.slice(0, 500)}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+/**
+ * GET single document (e.g. single types): null when 403/404 or JSON has no data.
+ */
+export async function strapiFetchPublicSingle<T extends { data?: unknown }>(
+  path: string,
+  init: Omit<RequestInit, "method"> & { next?: StrapiNext } = {}
+): Promise<T | null> {
+  const res = await strapiRequest(path, { ...init, method: "GET" });
+  if (res.status === 404 || res.status === 403) return null;
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`Strapi ${res.status}: ${t.slice(0, 500)}`);
+  }
+  const j = (await res.json()) as T;
+  if (j == null || j.data == null) return null;
+  return j;
+}
+
+export async function strapiFetch<T = unknown>(
+  path: string,
+  init: RequestInit & { next?: StrapiNext } = {}
+): Promise<T> {
   const { next, ...rest } = init;
   const res = await fetch(strapiUrl(path), {
     ...rest,
-    headers,
+    headers: strapiHeaders(init),
     ...(next !== undefined ? { next } : { cache: "no-store" }),
   });
 

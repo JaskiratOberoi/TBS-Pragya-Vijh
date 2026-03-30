@@ -1,4 +1,4 @@
-import { strapiFetch, unwrapList, normalizeDoc } from "@/lib/strapi";
+import { strapiFetchPublicList, strapiFetchPublicSingle, strapiGetResponse, unwrapList, normalizeDoc } from "@/lib/strapi";
 
 export type TimeSlot = { start: Date; end: Date; label: string };
 
@@ -23,10 +23,12 @@ export async function getAvailableSlots(params: {
   service: ServiceSlotInput;
 }): Promise<TimeSlot[]> {
   const { date, service } = params;
-  const settingsRes = await strapiFetch<{ data?: unknown }>(`/api/booking-setting`, { next: { revalidate: 60 } });
-  const settings = settingsRes.data ? normalizeDoc(settingsRes.data) : null;
+  const settingsJson = await strapiFetchPublicSingle<{ data?: unknown }>(`/api/booking-setting`, {
+    next: { revalidate: 60 },
+  });
+  const settings = settingsJson?.data ? normalizeDoc(settingsJson.data) : null;
   const day = date.getDay();
-  const rulesRes = await strapiFetch<{ data?: unknown[] }>(
+  const rulesRes = await strapiFetchPublicList<{ data?: unknown[] }>(
     `/api/availability-rules?filters[dayOfWeek][$eq]=${day}&filters[isActive][$eq]=true&pagination[pageSize]=50`
   );
   const rules = unwrapList(rulesRes);
@@ -46,20 +48,32 @@ export async function getAvailableSlots(params: {
 
   const isoStart = dayStart.toISOString();
   const isoEnd = dayEnd.toISOString();
-  const bookingsRes = await strapiFetch<{ data?: unknown[] }>(
+  const bookingsHttp = await strapiGetResponse(
     `/api/bookings?filters[scheduledAt][$gte]=${encodeURIComponent(isoStart)}&filters[scheduledAt][$lte]=${encodeURIComponent(isoEnd)}&pagination[pageSize]=200`
   );
-  const bookings = unwrapList(bookingsRes).map((b) => ({
+  if (bookingsHttp.status === 403 || bookingsHttp.status === 404) return [];
+  if (!bookingsHttp.ok) {
+    const t = await bookingsHttp.text();
+    throw new Error(`Strapi ${bookingsHttp.status}: ${t.slice(0, 500)}`);
+  }
+  const bookingsJson = (await bookingsHttp.json()) as { data?: unknown[] };
+  const bookings = unwrapList(bookingsJson).map((b) => ({
     scheduledAt: new Date(String((b as { scheduledAt?: string }).scheduledAt)),
     endAt: new Date(String((b as { endAt?: string }).endAt)),
     status: String((b as { status?: string }).status ?? ""),
   }));
 
   const dateStr = dayStart.toISOString().slice(0, 10);
-  const blockedRes = await strapiFetch<{ data?: unknown[] }>(
+  const blockedHttp = await strapiGetResponse(
     `/api/blocked-slots?filters[date][$eq]=${dateStr}&pagination[pageSize]=100`
   );
-  const blocked = unwrapList(blockedRes);
+  if (blockedHttp.status === 403 || blockedHttp.status === 404) return [];
+  if (!blockedHttp.ok) {
+    const t = await blockedHttp.text();
+    throw new Error(`Strapi ${blockedHttp.status}: ${t.slice(0, 500)}`);
+  }
+  const blockedJson = (await blockedHttp.json()) as { data?: unknown[] };
+  const blocked = unwrapList(blockedJson);
 
   const slots: TimeSlot[] = [];
 

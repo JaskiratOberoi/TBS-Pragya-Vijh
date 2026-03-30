@@ -4,6 +4,8 @@
   "private": true,
   "description": "Strapi 5 CMS for The Blissful Soul",
   "scripts": {
+    "prebuild": "node scripts/generate-core-api.cjs",
+    "predevelop": "node scripts/generate-core-api.cjs",
     "build": "strapi build",
     "develop": "strapi develop",
     "start": "strapi start",

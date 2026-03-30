@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
 import { toProductTileModel } from "@/lib/strapi-mappers";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,15 +19,15 @@ export const revalidate = 60;
 
 export default async function HomePage() {
   const [pr, sr, tr] = await Promise.all([
-    strapiFetch<{ data?: unknown[] }>(
+    strapiFetchPublicList<{ data?: unknown[] }>(
       `/api/products?filters[isActive][$eq]=true&populate[category]=true&sort[0]=createdAt:desc&pagination[page]=1&pagination[pageSize]=4`,
       { next: { revalidate: 60 } }
     ),
-    strapiFetch<{ data?: unknown[] }>(
+    strapiFetchPublicList<{ data?: unknown[] }>(
       `/api/services?filters[isActive][$eq]=true&sort[0]=price:asc&pagination[pageSize]=100`,
       { next: { revalidate: 60 } }
     ),
-    strapiFetch<{ data?: unknown[] }>(
+    strapiFetchPublicList<{ data?: unknown[] }>(
       `/api/testimonials?filters[isActive][$eq]=true&sort[0]=sortOrder:asc&pagination[pageSize]=100`,
       { next: { revalidate: 60 } }
     ),

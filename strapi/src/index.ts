@@ -1,11 +1,13 @@
+import type { Core } from "@strapi/types";
+import { ensureDefaultSingleTypes, grantStorefrontPublicPermissions } from "./bootstrap/storefront-access";
+import { migrateLegacyCatalogIfEnabled } from "./bootstrap/migrate-legacy-catalog";
+
 export default {
-  /**
-   * Register lifecycle hooks or custom logic before app loads.
-   */
   register(/* { strapi } */) {},
 
-  /**
-   * Bootstrap — runs before app starts.
-   */
-  bootstrap(/* { strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    await ensureDefaultSingleTypes(strapi);
+    await grantStorefrontPublicPermissions(strapi);
+    await migrateLegacyCatalogIfEnabled(strapi);
+  },
 };

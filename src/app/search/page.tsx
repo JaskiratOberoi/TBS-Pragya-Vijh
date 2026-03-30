@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
 import { formatINR } from "@/lib/utils";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 
@@ -9,7 +9,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const query = q?.trim() ?? "";
   let products: Array<Record<string, unknown>> = [];
   if (query.length > 1) {
-    const j = await strapiFetch<{ data?: unknown[] }>(
+    const j = await strapiFetchPublicList<{ data?: unknown[] }>(
       `/api/products?filters[isActive][$eq]=true&filters[$or][0][name][$containsi]=${encodeURIComponent(query)}&filters[$or][1][description][$containsi]=${encodeURIComponent(query)}&populate[category]=true&pagination[pageSize]=48`,
       { next: { revalidate: 60 } }
     );

@@ -40,6 +40,9 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       COMMERCE_INTERNAL_SECRET: ${COMMERCE_INTERNAL_SECRET:-dev-commerce-secret}
+      # Legacy Prisma Postgres (compose service name `db` / container blissful-soul-db-1 on same network)
+      LEGACY_DATABASE_URL: ${LEGACY_DATABASE_URL:-postgresql://blissful:blissful_dev@db:5432/blissful_soul}
+      IMPORT_LEGACY_CATALOG: ${IMPORT_LEGACY_CATALOG:-true}
     volumes:
       - strapi_uploads:/opt/app/public/uploads
     restart: unless-stopped

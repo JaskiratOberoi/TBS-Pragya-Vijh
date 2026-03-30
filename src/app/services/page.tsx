@@ -1,4 +1,4 @@
-import { strapiFetch, normalizeDoc } from "@/lib/strapi";
+import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { formatINR } from "@/lib/utils";
 import { BookNowButton } from "@/components/services/BookNowButton";
 
 export default async function ServicesPage() {
-  const j = await strapiFetch<{ data?: unknown[] }>(
+  const j = await strapiFetchPublicList<{ data?: unknown[] }>(
     `/api/services?filters[isActive][$eq]=true&sort[0]=name:asc&pagination[pageSize]=100`,
     { next: { revalidate: 60 } }
   );
