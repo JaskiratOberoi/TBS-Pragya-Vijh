@@ -9,7 +9,10 @@
     "lint": "next lint",
     "sync-media": "node scripts/sync-media-from-live.mjs",
     "sync-product-images": "node scripts/sync-product-image-urls-from-wp.mjs",
-    "docker:restart": "docker compose -f docker-compose.yml -f docker-compose.dev.yml restart db app"
+    "docker:restart": "docker compose -f docker-compose.yml -f docker-compose.dev.yml restart db app",
+    "docker:deploy": "docker compose build app && docker compose up -d app",
+    "docker:deploy:stack": "docker compose build && docker compose up -d",
+    "docker:deploy:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.4",

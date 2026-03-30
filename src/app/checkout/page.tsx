@@ -136,7 +136,7 @@ export default function CheckoutPage() {
             else router.push(`/checkout/success?orderId=${encodeURIComponent(data.orderId ?? "")}`);
           } else setErr("Verification failed");
         },
-        theme: { color: "#5c3d6e" },
+        theme: { color: "#4a3058" },
       };
       new window.Razorpay!(options).open();
     })();
@@ -147,12 +147,15 @@ export default function CheckoutPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" onLoad={() => setRzpReady(true)} />
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-3">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 md:py-14 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <h1 className="font-serif text-3xl font-bold text-primary">Checkout</h1>
+          <p className="text-xs font-medium uppercase tracking-luxury text-muted-foreground">Secure pay</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold tracking-display text-foreground md:text-4xl">
+            Checkout
+          </h1>
           {!session?.user && (
-            <div className="mt-6 space-y-4 rounded-lg border p-6">
-              <h2 className="font-semibold">Contact</h2>
+            <div className="mt-8 space-y-4 rounded-2xl border border-border/60 bg-card p-6 shadow-elevation-rest">
+              <h2 className="font-display text-lg font-semibold tracking-display">Contact</h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="gn">Full name</Label>
@@ -170,8 +173,8 @@ export default function CheckoutPage() {
             </div>
           )}
           {needsShip && (
-            <div className="mt-6 space-y-4 rounded-lg border p-6">
-              <h2 className="font-semibold">Shipping address</h2>
+            <div className="mt-6 space-y-4 rounded-2xl border border-border/60 bg-card p-6 shadow-elevation-rest">
+              <h2 className="font-display text-lg font-semibold tracking-display">Shipping address</h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="nm">Full name</Label>
@@ -211,8 +214,8 @@ export default function CheckoutPage() {
           </div>
           {err && <p className="mt-4 text-sm text-destructive">{err}</p>}
         </div>
-        <div className="h-fit rounded-lg border p-6">
-          <h2 className="font-semibold">Order summary</h2>
+        <div className="h-fit rounded-2xl border border-border/60 bg-card p-6 shadow-elevation-rest lg:sticky lg:top-28">
+          <h2 className="font-display text-lg font-semibold tracking-display">Order summary</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {cart.items.map((l) => (
               <li key={l.id} className="flex justify-between gap-2">
@@ -226,7 +229,12 @@ export default function CheckoutPage() {
           <div className="mt-4 border-t pt-4 font-semibold">
             Total <span className="float-right">{formatINR(cart.summary.totalPaise)}</span>
           </div>
-          <Button className="mt-6 w-full" type="button" disabled={!cart.items.length || !rzpReady} onClick={() => pay()}>
+          <Button
+            className="mt-6 h-12 w-full rounded-full text-base"
+            type="button"
+            disabled={!cart.items.length || !rzpReady}
+            onClick={() => pay()}
+          >
             Pay with Razorpay
           </Button>
           <Button variant="link" className="mt-2 px-0" asChild>

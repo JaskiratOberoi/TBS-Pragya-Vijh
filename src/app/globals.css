@@ -2,32 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Luxury-depth design tokens (Blissful Soul storefront)
+ * ------------------------------------------------------------------
+ * primary / primary-foreground — deep plum (brand, CTAs on light)
+ * metal / metal-foreground — champagne gold accent (borders, badges, active nav on dark)
+ * surface-inverse — footer, promo bands, dark sections (use with inverse-foreground)
+ * surface-elevated — subtle lift for cards on canvas
+ * shadow-elevation-* — tiered depth for cards and header
+ * --radius — hero / feature blocks; use rounded-2xl (dense) in components for PLP cards
+ */
 @layer base {
   :root {
-    --background: 220 24% 97%;
-    --foreground: 225 25% 12%;
+    --background: 40 18% 97%;
+    --foreground: 270 20% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 225 25% 12%;
-    /* Indigo accent #4B0082 */
-    --primary: 275 100% 25.5%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 18% 93%;
-    --secondary-foreground: 225 20% 22%;
-    --muted: 220 16% 94%;
-    --muted-foreground: 225 12% 42%;
-    --accent: 220 30% 92%;
-    --accent-foreground: 225 25% 18%;
-    --destructive: 0 84% 58%;
+    --card-foreground: 270 20% 9%;
+    /* Deep aubergine / plum */
+    --primary: 280 42% 24%;
+    --primary-foreground: 40 30% 98%;
+    --secondary: 270 8% 92%;
+    --secondary-foreground: 270 18% 18%;
+    --muted: 40 12% 93%;
+    --muted-foreground: 270 10% 38%;
+    --accent: 40 25% 94%;
+    --accent-foreground: 270 22% 14%;
+    --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 16% 90%;
-    --input: 220 16% 90%;
-    --ring: 275 100% 25.5%;
-    --radius: 1.25rem;
-    /* Bento-style section surfaces */
-    --bento-mint: 158 42% 94%;
-    --bento-peach: 28 85% 94%;
-    --bento-cream: 45 55% 96%;
-    --bento-canvas: 220 24% 97%;
+    --border: 270 8% 88%;
+    --input: 270 8% 88%;
+    --ring: 38 42% 48%;
+    --radius: 1.35rem;
+    /* Champagne / bronze metallic accent */
+    --metal: 38 38% 52%;
+    --metal-foreground: 270 25% 10%;
+    --metal-muted: 38 28% 42%;
+    /* Dark section surfaces */
+    --surface-inverse: 270 28% 8%;
+    --surface-inverse-foreground: 40 25% 96%;
+    --surface-inverse-muted: 270 12% 58%;
+    --surface-elevated: 0 0% 100%;
+    /* Section tints (bento evolution — slightly warmer) */
+    --bento-mint: 155 32% 93%;
+    --bento-peach: 28 72% 93%;
+    --bento-cream: 42 48% 95%;
+    --bento-canvas: 40 18% 97%;
+    /* Typography rhythm */
+    --tracking-display: -0.02em;
+    --tracking-wide: 0.12em;
   }
 }
 
@@ -38,4 +60,318 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* --- Ambient page backdrop (fixed, behind content z-stacking) --- */
+@keyframes ambient-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(8%, 6%) scale(1.06);
+  }
+  70% {
+    transform: translate(-5%, 10%) scale(0.94);
+  }
+}
+
+@keyframes ambient-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-10%, -8%) scale(1.08);
+  }
+}
+
+@keyframes ambient-drift-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  35% {
+    transform: translate(6%, -12%) scale(0.92);
+  }
+  65% {
+    transform: translate(-8%, 4%) scale(1.04);
+  }
+}
+
+@keyframes hero-sheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes inverse-aurora {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translate(-50%, -40%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-48%, -42%) scale(1.05);
+  }
+}
+
+@keyframes subtle-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  will-change: transform;
+}
+
+.ambient-orb-a {
+  width: min(62vw, 520px);
+  height: min(62vw, 520px);
+  top: -12%;
+  left: -8%;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.14) 0%, transparent 68%);
+  animation: ambient-drift-a 32s ease-in-out infinite;
+}
+
+.ambient-orb-b {
+  width: min(50vw, 420px);
+  height: min(50vw, 420px);
+  top: 35%;
+  right: -12%;
+  background: radial-gradient(circle, hsl(var(--metal) / 0.1) 0%, transparent 65%);
+  animation: ambient-drift-b 38s ease-in-out infinite;
+  animation-delay: -6s;
+}
+
+.ambient-orb-c {
+  width: min(70vw, 560px);
+  height: min(70vw, 560px);
+  bottom: -25%;
+  left: 20%;
+  background: radial-gradient(circle, hsl(155 32% 88% / 0.35) 0%, transparent 70%);
+  animation: ambient-drift-c 44s ease-in-out infinite;
+  animation-delay: -12s;
+}
+
+.ambient-grid-fade {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 40%, black 10%, transparent 72%);
+  opacity: 0.4;
+}
+
+.ambient-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Hero card: slow moving sheen */
+.hero-sheen {
+  position: relative;
+  isolation: isolate;
+}
+
+.hero-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    hsl(var(--metal) / 0.07) 38%,
+    hsl(var(--primary) / 0.06) 52%,
+    transparent 78%
+  );
+  background-size: 220% 220%;
+  animation: hero-sheen 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero-sheen > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Dark band: soft pulsing aurora */
+.section-inverse-aurora {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-inverse-aurora::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: 50%;
+  z-index: 0;
+  width: 140%;
+  height: 140%;
+  transform: translate(-50%, 0);
+  background: radial-gradient(ellipse at center, hsl(var(--metal) / 0.12) 0%, transparent 58%);
+  animation: inverse-aurora 24s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Optional hairline + slow light sweep at top of inverse band (first children of .section-inverse-aurora) */
+.section-inverse-top-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--metal) / 0.42), transparent);
+  pointer-events: none;
+}
+
+.section-inverse-top-sweep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  height: 1px;
+  width: min(38%, 240px);
+  background: linear-gradient(90deg, transparent, hsl(40 35% 94% / 0.45), transparent);
+  animation: subtle-shimmer 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb,
+  .ambient-orb-a,
+  .ambient-orb-b,
+  .ambient-orb-c,
+  .hero-sheen::before,
+  .section-inverse-aurora::before,
+  .section-inverse-top-sweep,
+  .bento-stagger > *,
+  .sessions-ambient::before,
+  .section-cream-glow::before {
+    animation: none !important;
+  }
+
+  .bento-stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bento-stagger > * {
+    animation: card-rise 0.65s cubic-bezier(0.25, 0.1, 0.25, 1) backwards;
+  }
+
+  .bento-stagger > *:nth-child(1) {
+    animation-delay: 0.06s;
+  }
+  .bento-stagger > *:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  .bento-stagger > *:nth-child(3) {
+    animation-delay: 0.18s;
+  }
+  .bento-stagger > *:nth-child(4) {
+    animation-delay: 0.24s;
+  }
+}
+
+@keyframes sessions-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+}
+
+/* Soft moving wash behind “Book your session” band */
+.sessions-ambient {
+  position: relative;
+  overflow: hidden;
+}
+
+.sessions-ambient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 25%, hsl(155 38% 86% / 0.55) 0%, transparent 52%),
+    radial-gradient(ellipse 60% 45% at 92% 78%, hsl(280 32% 90% / 0.35) 0%, transparent 48%);
+  animation: sessions-breathe 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.sessions-ambient-inner {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes cream-glow-drift {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(10px) scale(1.04);
+    opacity: 1;
+  }
+}
+
+.section-cream-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-cream-glow::before {
+  content: "";
+  position: absolute;
+  inset: -30% -5% auto -5%;
+  z-index: 0;
+  height: 85%;
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, hsl(var(--metal) / 0.07) 0%, transparent 65%);
+  animation: cream-glow-drift 28s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.section-cream-glow > * {
+  position: relative;
+  z-index: 1;
 }

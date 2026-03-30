@@ -67,6 +67,9 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       CRON_SECRET: ${CRON_SECRET:-}
+      INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
+      INSTAGRAM_USER_ID: ${INSTAGRAM_USER_ID:-}
+      NEXT_PUBLIC_INSTAGRAM_WIDGET_SRC: ${NEXT_PUBLIC_INSTAGRAM_WIDGET_SRC:-}
     volumes:
       - uploads:/app/public/uploads
     restart: unless-stopped

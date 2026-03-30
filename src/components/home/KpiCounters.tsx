@@ -37,8 +37,11 @@ export function KpiCounters() {
   }, []);
 
   return (
-    <section ref={ref} className="border-y bg-primary/5 py-14">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section
+      ref={ref}
+      className="section-inverse-aurora relative border-y border-metal/15 bg-inverse py-16 md:py-24"
+    >
+      <div className="relative z-[1] mx-auto grid max-w-7xl gap-10 px-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
           <Kpi key={k.label} {...k} start={vis} />
         ))}
@@ -51,11 +54,11 @@ function Kpi({ label, value, suffix, start }: { label: string; value: number; su
   const n = useCountUp(value, start);
   return (
     <div className="text-center">
-      <p className="font-serif text-4xl font-bold text-primary">
+      <p className="font-display text-4xl font-semibold tabular-nums text-metal md:text-5xl">
         {n}
         {suffix}
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
+      <p className="mt-2 text-xs font-medium uppercase tracking-luxury text-inverse-muted">{label}</p>
     </div>
   );
 }

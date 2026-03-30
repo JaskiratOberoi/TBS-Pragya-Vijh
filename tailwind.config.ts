@@ -12,6 +12,11 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         serif: ["var(--font-serif)", "Georgia", "serif"],
+        display: ["var(--font-display)", "var(--font-serif)", "Georgia", "serif"],
+      },
+      letterSpacing: {
+        display: "var(--tracking-display)",
+        luxury: "var(--tracking-wide)",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -43,6 +48,17 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        metal: {
+          DEFAULT: "hsl(var(--metal))",
+          foreground: "hsl(var(--metal-foreground))",
+          muted: "hsl(var(--metal-muted))",
+        },
+        inverse: {
+          DEFAULT: "hsl(var(--surface-inverse))",
+          foreground: "hsl(var(--surface-inverse-foreground))",
+          muted: "hsl(var(--surface-inverse-muted))",
+        },
+        elevated: "hsl(var(--surface-elevated))",
         bento: {
           mint: "hsl(var(--bento-mint))",
           peach: "hsl(var(--bento-peach))",
@@ -54,12 +70,17 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        dense: "0.75rem",
         "3xl": "1.5rem",
         "4xl": "2rem",
       },
       boxShadow: {
-        bento: "0 4px 24px -4px hsl(225 25% 12% / 0.08), 0 2px 8px -2px hsl(225 25% 12% / 0.06)",
-        "bento-sm": "0 2px 12px -2px hsl(225 25% 12% / 0.07)",
+        bento: "0 4px 24px -4px hsl(270 28% 8% / 0.07), 0 2px 8px -2px hsl(270 28% 8% / 0.05)",
+        "bento-sm": "0 2px 12px -2px hsl(270 28% 8% / 0.06)",
+        "elevation-rest": "0 1px 2px hsl(270 28% 8% / 0.04), 0 4px 16px -4px hsl(270 28% 8% / 0.08)",
+        "elevation-hover": "0 8px 28px -6px hsl(270 28% 8% / 0.12), 0 2px 8px -2px hsl(270 28% 8% / 0.06)",
+        "elevation-float": "0 24px 48px -12px hsl(270 28% 8% / 0.18), 0 8px 16px -6px hsl(270 28% 8% / 0.08)",
+        header: "0 1px 0 hsl(270 8% 88% / 0.9), 0 8px 32px -8px hsl(270 28% 8% / 0.06)",
       },
     },
   },

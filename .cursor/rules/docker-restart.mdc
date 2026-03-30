@@ -1,7 +1,8 @@
 ---
-description: Restart blissful-soul Docker dev stack after code, UI, config, or dependency changes
+description: Deploy blissful-soul to Docker after code or config changes so the user can test via containers
 globs:
   - blissful-soul/src/**
+  - blissful-soul/strapi/**
   - blissful-soul/prisma/**
   - blissful-soul/public/**
   - blissful-soul/next.config.*
@@ -11,39 +12,43 @@ globs:
   - blissful-soul/package.json
   - blissful-soul/tailwind.config.*
   - blissful-soul/postcss.config.*
-  # When the workspace root is the repo itself (not the parent folder):
+  - blissful-soul/src/app/globals.css
   - src/**
-  - prisma/**
+  - strapi/**
   - public/**
   - next.config.*
   - tailwind.config.*
   - postcss.config.*
 ---
 
-The dev app runs in Docker (`app` service) with the repo bind-mounted. **Still restart containers** after edits so the Next.js process reloads cleanly (especially `globals.css`, `tailwind.config`, env, Prisma, Dockerfiles, or `package.json`).
+The user tests the storefront through **Docker** (typically nginx on port 80, `app` service is a **production-style** Next standalone image).
 
-**At the end of a coding session** that touches this project, if the user runs the stack via Docker, **run a restart** unless they said not to:
+## After edits that affect the running site
 
-```powershell
-Set-Location "e:\Projects\New folder\blissful-soul"; .\restart-dev-docker.ps1
-```
-
-Or from the project directory (any shell with Docker):
-
-```bash
-npm run docker:restart
-```
-
-Or:
+Unless the user explicitly says **not** to touch Docker, **rebuild and redeploy** at the end of the session:
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml restart db app
+cd "e:\Projects\New folder\blissful-soul"; npm run docker:deploy
 ```
 
-After **`package.json` / lockfile / Dockerfile** changes, a **rebuild** may be needed instead of only restart:
+That runs `docker compose build app && docker compose up -d app` (refresh the Next.js image with latest code).
 
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d db app
-```
+### When to use other commands
 
-Do this automatically after such edits unless the user explicitly asks not to.
+- **Strapi, nginx, or Dockerfile base image changed** — full stack:
+
+  `npm run docker:deploy:stack`
+
+- **Local dev stack** with bind-mounted `Dockerfile.dev` and hot reload:
+
+  `npm run docker:deploy:dev`
+
+- **Only restart** (no image rebuild — rare for this user’s “test in Docker” flow):
+
+  `npm run docker:restart`
+
+### After `package.json` / `package-lock.json` / root `Dockerfile` changes
+
+A rebuild is **required**; `docker:deploy` already rebuilds `app`.
+
+Do this **automatically** after implementing features, UI, env samples, or compose changes so the user can verify immediately.

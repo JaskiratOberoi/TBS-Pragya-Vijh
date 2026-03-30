@@ -32,25 +32,26 @@ export function ProductTile({ product, unitPricePaise, className }: Props) {
     product.salePrice != null && product.salePrice < product.price
       ? Math.round((1 - product.salePrice / product.price) * 100)
       : 0;
+  const onSale = product.salePrice != null && product.salePrice < product.price;
   const img = product.images[0] ?? "/assets/products/placeholder.svg";
 
   return (
     <MotionCard
       className={cn(
-        "group overflow-hidden rounded-3xl border-0 bg-card shadow-bento transition-shadow hover:shadow-bento-sm",
+        "group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-elevation-rest transition-shadow duration-300 hover:border-border hover:shadow-elevation-hover",
         className
       )}
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.995 }}
       transition={{ type: "spring", stiffness: 420, damping: 28 }}
     >
-      <div className="relative aspect-square overflow-hidden rounded-t-3xl bg-muted">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-t-2xl bg-muted">
         <Link href={`/shop/${product.slug}`} className="absolute inset-0 z-0 block overflow-hidden">
           <Image
             src={img}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
         </Link>
@@ -59,32 +60,40 @@ export function ProductTile({ product, unitPricePaise, className }: Props) {
             <WishlistButton productId={product.id} variant="icon" />
           </div>
           {off > 0 && (
-            <Badge className="pointer-events-auto absolute left-3 top-3 rounded-full px-2.5 py-0.5 shadow-sm" variant="destructive">
-              -{off}%
+            <Badge className="pointer-events-auto absolute left-3 top-3 border border-metal/30 px-2.5 py-0.5" variant="metal">
+              −{off}%
             </Badge>
           )}
           {product.productType === "DIGITAL" && (
             <Badge
-              className="pointer-events-auto absolute bottom-3 left-3 rounded-full bg-background/90 text-foreground backdrop-blur-sm"
+              className="pointer-events-auto absolute bottom-3 left-3 rounded-full border border-border/50 bg-background/90 text-foreground backdrop-blur-sm"
               variant="secondary"
             >
               Digital
             </Badge>
           )}
-          <div className="pointer-events-none absolute bottom-3 right-3">
-            <span className="inline-flex min-w-[3.5rem] items-center justify-center rounded-full bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-bento-sm">
-              {formatINR(unitPricePaise)}
-            </span>
-          </div>
         </div>
       </div>
-      <CardContent className="space-y-1.5 p-4 pt-3">
-        <Link href={`/shop/${product.slug}`} className="line-clamp-2 font-medium leading-snug text-foreground hover:text-primary">
+      <CardContent className="space-y-2 p-4 pt-3">
+        <Link
+          href={`/shop/${product.slug}`}
+          className="line-clamp-2 font-medium leading-snug text-foreground transition-colors hover:text-primary"
+        >
           {product.name}
         </Link>
-        {product.salePrice != null && product.salePrice < product.price && (
-          <p className="text-sm text-muted-foreground line-through">{formatINR(product.price)}</p>
-        )}
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          {onSale && (
+            <span className="text-sm text-muted-foreground line-through">{formatINR(product.price)}</span>
+          )}
+          <span
+            className={cn(
+              "font-display text-lg font-semibold tabular-nums",
+              onSale ? "text-metal-muted" : "text-foreground"
+            )}
+          >
+            {formatINR(unitPricePaise)}
+          </span>
+        </div>
       </CardContent>
     </MotionCard>
   );

@@ -3,9 +3,7 @@ import Image from "next/image";
 import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
 import { toProductTileModel } from "@/lib/strapi-mappers";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { formatINR } from "@/lib/utils";
 import { effectiveUnitPrice } from "@/lib/promo-engine";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
@@ -13,7 +11,9 @@ import { HomeBentoReveal } from "@/components/home/HomeBentoReveal";
 import { KpiCounters } from "@/components/home/KpiCounters";
 import { StaggerGrid } from "@/components/motion/StaggerGrid";
 import { ProductTile } from "@/components/shop/ProductTile";
-import { BookNowButton } from "@/components/services/BookNowButton";
+import { SessionServiceCard } from "@/components/services/SessionServiceCard";
+import { InstagramFeedSection } from "@/components/home/InstagramFeedSection";
+import { MotionSection } from "@/components/motion/MotionSection";
 
 export const revalidate = 60;
 
@@ -61,11 +61,11 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <HomeBentoReveal>
-        <div className="grid auto-rows-fr gap-4 md:grid-cols-12 md:gap-5">
-          <div className="relative flex flex-col justify-between overflow-hidden rounded-4xl bg-gradient-to-br from-bento-mint via-card to-bento-cream p-8 shadow-bento md:col-span-7 md:row-span-2 md:min-h-[320px]">
+        <div className="bento-stagger grid auto-rows-fr gap-4 md:grid-cols-12 md:gap-5">
+          <div className="hero-sheen relative flex flex-col justify-between overflow-hidden rounded-4xl bg-gradient-to-br from-bento-mint via-card to-bento-cream p-8 shadow-elevation-hover md:col-span-7 md:row-span-2 md:min-h-[320px]">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-primary/90">Welcome</p>
-              <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-foreground md:text-4xl lg:text-5xl">
+              <p className="text-xs font-medium uppercase tracking-luxury text-primary/90">Welcome</p>
+              <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-display text-foreground md:text-4xl lg:text-[2.75rem]">
                 Heal, manifest & align with Master Pragya Vijh
               </h1>
               <p className="mt-4 max-w-xl text-lg text-muted-foreground">
@@ -83,23 +83,23 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative hidden min-h-[200px] overflow-hidden rounded-4xl border border-border/50 bg-muted shadow-bento md:col-span-5 md:block">
+          <div className="group relative hidden min-h-[200px] overflow-hidden rounded-4xl border border-border/50 bg-muted shadow-elevation-rest transition-shadow duration-500 hover:shadow-elevation-hover md:col-span-5 md:block">
             <Image
               src="/assets/products/placeholder.svg"
               alt="Master Pragya Vijh"
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
               priority
             />
           </div>
 
           <Link
             href="/shop"
-            className="flex flex-col justify-between rounded-4xl bg-bento-peach p-6 shadow-bento transition hover:shadow-bento-sm md:col-span-5"
+            className="flex flex-col justify-between rounded-4xl bg-bento-peach p-6 shadow-elevation-rest transition-all duration-500 hover:-translate-y-1 hover:shadow-elevation-hover md:col-span-5"
           >
             <div>
-              <p className="text-sm font-semibold text-primary">Shop</p>
-              <h2 className="mt-1 font-serif text-xl font-bold text-foreground">Crystals &amp; tools</h2>
+              <p className="text-xs font-medium uppercase tracking-luxury text-primary">Shop</p>
+              <h2 className="mt-2 font-display text-xl font-semibold tracking-display text-foreground">Crystals &amp; tools</h2>
               <p className="mt-2 text-sm text-muted-foreground">Bracelets, pyramids, tumbles &amp; more.</p>
             </div>
             <span className="mt-4 inline-flex w-fit items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
@@ -109,17 +109,36 @@ export default async function HomePage() {
         </div>
       </HomeBentoReveal>
 
-      <section className="mx-auto max-w-7xl px-4 py-10">
+      <section className="section-inverse-aurora relative border-y border-metal/10 bg-inverse py-16 text-inverse-foreground md:py-24">
+        <span className="section-inverse-top-glow" aria-hidden />
+        <span className="section-inverse-top-sweep" aria-hidden />
+        <div className="relative z-[4] mx-auto max-w-7xl px-4 text-center">
+          <p className="text-xs font-medium uppercase tracking-luxury text-metal">Curated for you</p>
+          <h2 className="mx-auto mt-3 max-w-2xl font-display text-2xl font-semibold leading-snug tracking-display md:text-3xl">
+            Crystals and sessions chosen for depth, clarity, and everyday ritual.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-inverse-muted">
+            Every piece is selected to support your journey — from wearable energy to one-on-one guidance with Master Pragya Vijh.
+          </p>
+          <Button asChild size="lg" className="mt-8 rounded-full bg-metal px-10 text-metal-foreground hover:bg-metal/90">
+            <Link href="/shop">Browse the shop</Link>
+          </Button>
+        </div>
+      </section>
+
+      <MotionSection emphasis>
+        <section className="mx-auto max-w-7xl px-4 py-16 md:py-24">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-foreground md:text-3xl">Hot sellers</h2>
-            <p className="text-sm text-muted-foreground">Fresh picks from the catalog</p>
+            <p className="text-xs font-medium uppercase tracking-luxury text-muted-foreground">Catalog</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-display text-foreground md:text-3xl">Hot sellers</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Fresh picks from the catalog</p>
           </div>
-          <Button variant="outline" asChild className="mt-2 w-fit rounded-full md:mt-0">
+          <Button variant="outline" asChild className="mt-2 w-fit rounded-full border-border/80 md:mt-0">
             <Link href="/shop">See all</Link>
           </Button>
         </div>
-        <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerGrid className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {hotProducts.map((p) => (
             <ProductTile
               key={p.id}
@@ -128,14 +147,19 @@ export default async function HomePage() {
             />
           ))}
         </StaggerGrid>
-      </section>
+        </section>
+      </MotionSection>
 
-      <section className="bg-bento-mint/50 py-14">
-        <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-center font-serif text-2xl font-bold text-foreground md:text-3xl">Book your session</h2>
+      <MotionSection>
+        <section className="sessions-ambient bg-bento-mint/40 py-16 md:py-24">
+          <div className="sessions-ambient-inner mx-auto max-w-7xl px-4">
+          <p className="text-center text-xs font-medium uppercase tracking-luxury text-muted-foreground">Sessions</p>
+          <h2 className="mt-2 text-center font-display text-2xl font-semibold tracking-display text-foreground md:text-3xl">
+            Book your session
+          </h2>
           <p className="mx-auto mt-2 max-w-lg text-center text-sm text-muted-foreground">Audio &amp; video readings and counselling</p>
-          <Tabs defaultValue="top" className="mt-10">
-            <TabsList className="mx-auto flex h-auto w-full max-w-md flex-wrap justify-center gap-1 rounded-full border border-border/60 bg-card/90 p-1 shadow-sm">
+          <Tabs defaultValue="top" className="mt-12">
+            <TabsList className="mx-auto flex h-auto w-full max-w-md flex-wrap justify-center gap-1 rounded-full border border-border/60 bg-card/95 p-1 shadow-elevation-rest">
               <TabsTrigger value="top" className="rounded-full px-4 data-[state=active]:shadow-sm">
                 Top
               </TabsTrigger>
@@ -146,36 +170,47 @@ export default async function HomePage() {
                 Video
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="top" className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {topServices.map((s) => (
-                <ServiceCard key={s.id} s={s} />
-              ))}
+            <TabsContent value="top" className="mt-8">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {topServices.map((s) => (
+                  <SessionServiceCard key={s.id} s={s} />
+                ))}
+              </div>
             </TabsContent>
-            <TabsContent value="audio" className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {audio.map((s) => (
-                <ServiceCard key={s.id} s={s} />
-              ))}
+            <TabsContent value="audio" className="mt-8">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {audio.map((s) => (
+                  <SessionServiceCard key={s.id} s={s} />
+                ))}
+              </div>
             </TabsContent>
-            <TabsContent value="video" className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {video.map((s) => (
-                <ServiceCard key={s.id} s={s} />
-              ))}
+            <TabsContent value="video" className="mt-8">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {video.map((s) => (
+                  <SessionServiceCard key={s.id} s={s} />
+                ))}
+              </div>
             </TabsContent>
           </Tabs>
-        </div>
-      </section>
+          </div>
+        </section>
+      </MotionSection>
 
-      <section className="mx-auto max-w-7xl px-4 py-14">
+      <MotionSection>
+        <section className="mx-auto max-w-7xl px-4 py-16 md:py-24">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-foreground md:text-3xl">Shop healing crystals</h2>
+            <p className="text-xs font-medium uppercase tracking-luxury text-muted-foreground">Featured</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-display text-foreground md:text-3xl">
+              Shop healing crystals
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">Same favorites as the shop grid</p>
           </div>
-          <Button variant="outline" asChild className="rounded-full">
+          <Button variant="outline" asChild className="rounded-full border-border/80">
             <Link href="/shop">See all</Link>
           </Button>
         </div>
-        <StaggerGrid className="mt-8 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
+        <StaggerGrid className="mt-10 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
           {hotProducts.slice(0, 4).map((p) => (
             <ProductTile
               key={`dup-${p.id}`}
@@ -184,25 +219,16 @@ export default async function HomePage() {
             />
           ))}
         </StaggerGrid>
-      </section>
+        </section>
+      </MotionSection>
 
-      <section className="bg-bento-cream/60 py-14">
-        <div className="mx-auto max-w-7xl px-4">
-          <h2 className="text-center font-serif text-2xl font-bold text-foreground md:text-3xl">On Instagram</h2>
-          <div className="mt-8 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 md:gap-3">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="relative aspect-square overflow-hidden rounded-3xl bg-muted shadow-sm">
-                <Image src="/assets/products/placeholder.svg" alt="" fill className="object-cover opacity-70" />
-              </div>
-            ))}
-          </div>
-          <p className="mt-6 text-center text-sm text-muted-foreground">@pragya.vijh_astrotalks — follow for daily guidance</p>
-        </div>
-      </section>
+      <InstagramFeedSection />
 
-      <section className="mx-auto max-w-7xl px-4 py-14">
-        <TestimonialsCarousel testimonials={testimonials} />
-      </section>
+      <MotionSection>
+        <section className="mx-auto max-w-7xl px-4 py-16 md:py-24">
+          <TestimonialsCarousel testimonials={testimonials} />
+        </section>
+      </MotionSection>
 
       <KpiCounters />
 
@@ -217,20 +243,3 @@ export default async function HomePage() {
   );
 }
 
-function ServiceCard({ s }: { s: { id: string; name: string; type: string; price: number; durationMinutes: number } }) {
-  return (
-    <Card className="rounded-3xl border-0 shadow-bento">
-      <CardContent className="space-y-4 p-6">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-medium leading-snug">{s.name}</h3>
-          <Badge variant="secondary" className="shrink-0 rounded-full">
-            {s.type}
-          </Badge>
-        </div>
-        <p className="text-sm text-muted-foreground">{s.durationMinutes} min</p>
-        <p className="text-lg font-semibold text-primary">{formatINR(s.price)}</p>
-        <BookNowButton serviceId={s.id} className="rounded-full" />
-      </CardContent>
-    </Card>
-  );
-}
