@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { strapiFetchPublicList, normalizeDoc } from "@/lib/strapi";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { SessionServiceCard } from "@/components/services/SessionServiceCard";
+import { SessionCategoryTabs } from "@/components/services/SessionCategoryTabs";
 
 export default async function ServicesPage() {
   const j = await strapiFetchPublicList<{ data?: unknown[] }>(
@@ -37,49 +36,7 @@ export default async function ServicesPage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <Tabs defaultValue="top" className="w-full">
-          <TabsList className="mx-auto flex h-auto w-full max-w-lg flex-wrap gap-1 rounded-full border border-border/50 bg-muted/40 p-1.5 shadow-elevation-rest backdrop-blur-sm">
-            <TabsTrigger
-              value="top"
-              className="flex-1 rounded-full px-4 py-2.5 text-sm transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
-            >
-              Top
-            </TabsTrigger>
-            <TabsTrigger
-              value="audio"
-              className="flex-1 rounded-full px-4 py-2.5 text-sm transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
-            >
-              Audio
-            </TabsTrigger>
-            <TabsTrigger
-              value="video"
-              className="flex-1 rounded-full px-4 py-2.5 text-sm transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
-            >
-              Video
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="top" className="mt-10">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {top.map((s) => (
-                <SessionServiceCard key={s.id} s={s} />
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="audio" className="mt-10">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {audio.map((s) => (
-                <SessionServiceCard key={s.id} s={s} />
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="video" className="mt-10">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {video.map((s) => (
-                <SessionServiceCard key={s.id} s={s} />
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <SessionCategoryTabs top={top} audio={audio} video={video} />
       </div>
     </div>
   );

@@ -105,7 +105,7 @@ export function SessionServiceCard({ s, className }: Props) {
         <div className="mt-auto flex flex-col gap-4 pt-6">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground">Session fee</p>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.65rem]">
+            <p className="mt-1 font-sans text-xl font-medium tabular-nums tracking-normal text-foreground antialiased sm:text-2xl sm:font-semibold">
               {formatINR(s.price)}
             </p>
           </div>
